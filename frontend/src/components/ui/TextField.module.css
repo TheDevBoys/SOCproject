@@ -1,0 +1,47 @@
+.field {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.label {
+  color: #465365;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.input {
+  width: 100%;
+  min-height: 38px;
+  padding: 9px 10px;
+  border: 1px solid #bdc9d8;
+  border-radius: 6px;
+  background: #fff;
+  color: #202731;
+  font: inherit;
+  font-size: 13px;
+  transition: border-color 150ms, box-shadow 150ms;
+}
+
+.input::placeholder {
+  color: #454c57;
+}
+
+.input:hover {
+  border-color: #8c9bae;
+}
+
+.input:focus-visible {
+  outline: 2px solid #4264e8;
+  outline-offset: 2px;
+}
+
+.input[aria-invalid='true'] {
+  border-color: #b42318;
+}
+
+.error {
+  color: #b42318;
+  font-size: 12px;
+  line-height: 1.5;
+}

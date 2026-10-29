@@ -1,0 +1,37 @@
+/* [project]/src/components/ui/Button.module.css [app-client] (css) */
+.Button-module__8RiFmG__button {
+  color: #fff;
+  cursor: pointer;
+  background: #4264e8;
+  border: 0;
+  border-radius: 6px;
+  min-height: 40px;
+  padding: 10px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  transition: background .15s;
+}
+
+.Button-module__8RiFmG__button:hover:not(:disabled) {
+  background: #3353d1;
+}
+
+.Button-module__8RiFmG__button:focus-visible {
+  outline-offset: 4px;
+  outline: 2px solid #4264e8;
+}
+
+.Button-module__8RiFmG__button:disabled {
+  opacity: .6;
+  cursor: not-allowed;
+}
+
+.Button-module__8RiFmG__button[aria-busy="true"] {
+  cursor: progress;
+}
+
+.Button-module__8RiFmG__fullWidth {
+  width: 100%;
+}
+
+/*# sourceMappingURL=src_components_ui_Button_module_css_1igg3k2-ikub5._.single.css.map*/

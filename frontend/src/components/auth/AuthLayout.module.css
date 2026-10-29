@@ -1,0 +1,115 @@
+.page {
+  min-height: 100svh;
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  min-height: 100svh;
+}
+
+.intro {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 64px;
+  padding: 54px;
+  background: #0e1116;
+  color: #f9fafc;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.brandAccent {
+  color: #37c65a;
+}
+
+.brandIcon {
+  display: grid;
+  place-items: center;
+  width: 33px;
+  height: 33px;
+  border-radius: 9px;
+  background: #3347a5;
+  color: #48e775;
+  font-family: monospace;
+  font-size: 17px;
+}
+
+.pitch h2 {
+  max-width: 450px;
+  margin: 0 0 18px;
+  font-size: clamp(25px, 2.2vw, 32px);
+  line-height: 1.25;
+  letter-spacing: .1px;
+  font-weight: 600;
+}
+
+.benefits {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: #b6c1ce;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.footer {
+  margin: 0;
+  color: #91a1b6;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.description {
+  max-width: 450px;
+  margin: 0;
+  color: #b6c1ce;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.formPanel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 32px;
+  background: #f4f6fa;
+}
+
+@media (max-width: 900px) {
+  .intro {
+    padding: 36px;
+  }
+
+  .formPanel {
+    padding: 36px 24px;
+  }
+}
+
+@media (max-width: 700px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+
+  .intro {
+    gap: 32px;
+    padding: 30px 24px;
+  }
+
+  .pitch h2 {
+    max-width: 440px;
+  }
+
+  .formPanel {
+    padding: 36px 20px;
+  }
+}

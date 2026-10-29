@@ -1,0 +1,118 @@
+/* [project]/src/components/auth/AuthLayout.module.css [app-client] (css) */
+.AuthLayout-module__VWZfwq__page {
+  min-height: 100svh;
+}
+
+.AuthLayout-module__VWZfwq__layout {
+  grid-template-columns: 1fr 1fr;
+  min-height: 100svh;
+  display: grid;
+}
+
+.AuthLayout-module__VWZfwq__intro {
+  color: #f9fafc;
+  background: #0e1116;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 64px;
+  padding: 54px;
+  display: flex;
+}
+
+.AuthLayout-module__VWZfwq__brand {
+  align-items: center;
+  gap: 10px;
+  font-size: 18px;
+  font-weight: 700;
+  display: flex;
+}
+
+.AuthLayout-module__VWZfwq__brandAccent {
+  color: #37c65a;
+}
+
+.AuthLayout-module__VWZfwq__brandIcon {
+  color: #48e775;
+  background: #3347a5;
+  border-radius: 9px;
+  place-items: center;
+  width: 33px;
+  height: 33px;
+  font-family: monospace;
+  font-size: 17px;
+  display: grid;
+}
+
+.AuthLayout-module__VWZfwq__pitch h2 {
+  letter-spacing: .1px;
+  max-width: 450px;
+  margin: 0 0 18px;
+  font-size: clamp(25px, 2.2vw, 32px);
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.AuthLayout-module__VWZfwq__benefits {
+  color: #b6c1ce;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  font-size: 13px;
+  line-height: 1.4;
+  list-style: none;
+  display: grid;
+}
+
+.AuthLayout-module__VWZfwq__footer {
+  color: #91a1b6;
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.AuthLayout-module__VWZfwq__description {
+  color: #b6c1ce;
+  max-width: 450px;
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.AuthLayout-module__VWZfwq__formPanel {
+  background: #f4f6fa;
+  justify-content: center;
+  align-items: center;
+  padding: 48px 32px;
+  display: flex;
+}
+
+@media (max-width: 900px) {
+  .AuthLayout-module__VWZfwq__intro {
+    padding: 36px;
+  }
+
+  .AuthLayout-module__VWZfwq__formPanel {
+    padding: 36px 24px;
+  }
+}
+
+@media (max-width: 700px) {
+  .AuthLayout-module__VWZfwq__layout {
+    grid-template-columns: 1fr;
+  }
+
+  .AuthLayout-module__VWZfwq__intro {
+    gap: 32px;
+    padding: 30px 24px;
+  }
+
+  .AuthLayout-module__VWZfwq__pitch h2 {
+    max-width: 440px;
+  }
+
+  .AuthLayout-module__VWZfwq__formPanel {
+    padding: 36px 20px;
+  }
+}
+
+/*# sourceMappingURL=src_components_auth_AuthLayout_module_css_1igg3k2-ikub5._.single.css.map*/

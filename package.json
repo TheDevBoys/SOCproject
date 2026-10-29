@@ -1,0 +1,14 @@
+{
+  "name": "soc-management-system",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently --kill-others --names frontend,backend \"npm run frontend\" \"npm run backend\"",
+    "frontend": "npm --prefix frontend run dev",
+    "backend": "dotnet run --project backend/SocManagement.Api/SocManagement.Api.csproj --launch-profile Development",
+    "build": "npm --prefix frontend run build",
+    "start": "npm --prefix frontend run start"
+  },
+  "devDependencies": {
+    "concurrently": "^10.0.6"
+  }
+}

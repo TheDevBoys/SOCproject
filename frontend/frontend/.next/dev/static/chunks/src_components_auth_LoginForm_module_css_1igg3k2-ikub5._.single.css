@@ -1,0 +1,68 @@
+/* [project]/src/components/auth/LoginForm.module.css [app-client] (css) */
+.LoginForm-module__es-cSa__card {
+  background: #fff;
+  border: 1px solid #d7dee8;
+  border-radius: 8px;
+  width: 100%;
+  max-width: 382px;
+  padding: 32px 30px;
+}
+
+.LoginForm-module__es-cSa__card h2 {
+  margin: 0 0 6px;
+  font-size: 22px;
+  font-weight: 650;
+  line-height: 1.35;
+}
+
+.LoginForm-module__es-cSa__description {
+  color: #647184;
+  margin: 0 0 18px;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.LoginForm-module__es-cSa__fields {
+  gap: 16px;
+  display: grid;
+}
+
+.LoginForm-module__es-cSa__submit {
+  width: 100%;
+  margin-top: 15px;
+}
+
+.LoginForm-module__es-cSa__forgot {
+  color: #4264e8;
+  text-underline-offset: 2px;
+  cursor: pointer;
+  background: none;
+  border: 0;
+  margin: 16px auto 0;
+  padding: 2px;
+  font-size: 12px;
+  text-decoration: underline;
+  display: block;
+}
+
+.LoginForm-module__es-cSa__forgot:focus-visible {
+  outline-offset: 4px;
+  outline: 2px solid #4264e8;
+}
+
+.LoginForm-module__es-cSa__note {
+  color: #647184;
+  border-top: 1px solid #e8edf3;
+  margin: 16px 0 0;
+  padding-top: 16px;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+@media (max-width: 400px) {
+  .LoginForm-module__es-cSa__card {
+    padding: 26px 22px;
+  }
+}
+
+/*# sourceMappingURL=src_components_auth_LoginForm_module_css_1igg3k2-ikub5._.single.css.map*/

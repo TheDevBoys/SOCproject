@@ -1,0 +1,97 @@
+.card {
+  width: 100%;
+  max-width: 420px;
+  padding: 32px;
+  border: 1px solid #d7dee8;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.card h1 {
+  margin: 0 0 8px;
+  font-size: 22px;
+  line-height: 1.35;
+  font-weight: 650;
+}
+
+.description {
+  margin: 0 0 18px;
+  color: #647184;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.digits {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.digit {
+  width: 100%;
+  min-width: 0;
+  height: 56px;
+  padding: 4px;
+  border: 1px solid #bdc9d8;
+  border-radius: 6px;
+  background: #fff;
+  color: #202731;
+  font-size: 24px;
+  text-align: center;
+}
+
+.digit:focus-visible,
+.actions button:focus-visible,
+.actions a:focus-visible {
+  outline: 2px solid #4264e8;
+  outline-offset: 3px;
+}
+
+.verify {
+  width: 100%;
+  margin-top: 18px;
+}
+
+.actions {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.actions button,
+.actions a {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #4264e8;
+  font-size: 12px;
+  line-height: 1.5;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+.note {
+  margin: 20px 0 0;
+  padding-top: 16px;
+  border-top: 1px solid #e8edf3;
+  color: #647184;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+@media (max-width: 400px) {
+  .card {
+    padding: 26px 20px;
+  }
+
+  .digits {
+    gap: 8px;
+  }
+
+  .digit {
+    height: 48px;
+  }
+}
