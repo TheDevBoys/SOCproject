@@ -5,13 +5,13 @@
   border: 1px solid #d7dee8;
   border-radius: 8px;
   background: #fff;
-}
 
-.card h1 {
-  margin: 0 0 8px;
-  font-size: 22px;
-  line-height: 1.35;
-  font-weight: 650;
+  & h1 {
+    margin: 0 0 8px;
+    font-size: 22px;
+    line-height: 1.35;
+    font-weight: 650;
+  }
 }
 
 .description {
@@ -38,18 +38,11 @@
   color: #202731;
   font-size: 24px;
   text-align: center;
-}
 
-.digit:focus-visible,
-.actions button:focus-visible,
-.actions a:focus-visible {
-  outline: 2px solid #4264e8;
-  outline-offset: 3px;
-}
-
-.verify {
-  width: 100%;
-  margin-top: 18px;
+  &:focus-visible {
+    outline: 2px solid #4264e8;
+    outline-offset: 3px;
+  }
 }
 
 .actions {
@@ -58,19 +51,30 @@
   flex-wrap: wrap;
   gap: 12px;
   margin-top: 20px;
+
+  & button:focus-visible,
+  & a:focus-visible {
+    outline: 2px solid #4264e8;
+    outline-offset: 3px;
+  }
+
+  & button,
+  & a {
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: #4264e8;
+    font-size: 12px;
+    line-height: 1.5;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    cursor: pointer;
+  }
 }
 
-.actions button,
-.actions a {
-  padding: 0;
-  border: 0;
-  background: transparent;
-  color: #4264e8;
-  font-size: 12px;
-  line-height: 1.5;
-  text-decoration: underline;
-  text-underline-offset: 2px;
-  cursor: pointer;
+.verify {
+  width: 100%;
+  margin-top: 18px;
 }
 
 .note {

@@ -12,7 +12,7 @@ export default function LoginForm() {
           <TextField id="email" name="email" label="Email address" type="email" autoComplete="username" placeholder="name@organisation.com" required />
           <TextField id="password" name="password" label="Password" type="password" autoComplete="current-password" placeholder="Password" required />
         </div>
-        <Button className={styles.submit} type="button">Sign in</Button>
+        <Button variant="primary" className={styles.submit} type="button">Sign in</Button>
         <button className={styles.forgot} type="button">
           Forgot your password?
         </button>

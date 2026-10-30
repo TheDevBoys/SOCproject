@@ -2,12 +2,14 @@ import type { ButtonHTMLAttributes } from 'react'
 import styles from './Button.module.css'
 
 type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
+  variant?: 'primary' | 'secondary'
   fullWidth?: boolean
   loading?: boolean
 }
 
 export default function Button({
   type = 'button',
+  variant = 'primary',
   className,
   fullWidth = false,
   loading = false,
@@ -19,7 +21,7 @@ export default function Button({
     <button
       {...props}
       type={type}
-      className={[styles.button, fullWidth && styles.fullWidth, className]
+      className={[styles.button, styles[variant], fullWidth && styles.fullWidth, className]
         .filter(Boolean)
         .join(' ')}
       disabled={disabled || loading}

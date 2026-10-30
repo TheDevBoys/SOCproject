@@ -42,13 +42,15 @@
   font-size: 17px;
 }
 
-.pitch h2 {
-  max-width: 450px;
-  margin: 0 0 18px;
-  font-size: clamp(25px, 2.2vw, 32px);
-  line-height: 1.25;
-  letter-spacing: .1px;
-  font-weight: 600;
+.pitch {
+  & h2 {
+    max-width: 450px;
+    margin: 0 0 18px;
+    font-size: clamp(25px, 2.2vw, 32px);
+    line-height: 1.25;
+    letter-spacing: .1px;
+    font-weight: 600;
+  }
 }
 
 .benefits {
@@ -105,8 +107,10 @@
     padding: 30px 24px;
   }
 
-  .pitch h2 {
-    max-width: 440px;
+  .pitch {
+    & h2 {
+      max-width: 440px;
+    }
   }
 
   .formPanel {

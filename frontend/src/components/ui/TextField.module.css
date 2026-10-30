@@ -21,23 +21,23 @@
   font: inherit;
   font-size: 13px;
   transition: border-color 150ms, box-shadow 150ms;
-}
 
-.input::placeholder {
-  color: #454c57;
-}
+  &::placeholder {
+    color: #454c57;
+  }
 
-.input:hover {
-  border-color: #8c9bae;
-}
+  &:hover {
+    border-color: #8c9bae;
+  }
 
-.input:focus-visible {
-  outline: 2px solid #4264e8;
-  outline-offset: 2px;
-}
+  &:focus-visible {
+    outline: 2px solid #4264e8;
+    outline-offset: 2px;
+  }
 
-.input[aria-invalid='true'] {
-  border-color: #b42318;
+  &[aria-invalid='true'] {
+    border-color: #b42318;
+  }
 }
 
 .error {

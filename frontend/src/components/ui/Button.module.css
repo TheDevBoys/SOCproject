@@ -1,32 +1,47 @@
 .button {
   min-height: 40px;
   padding: 10px 16px;
-  border: 0;
+  border: 1px solid transparent;
   border-radius: 6px;
-  background: #4264e8;
-  color: white;
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
-  transition: background 150ms;
+  transition: background 150ms, border-color 150ms;
+
+  &:focus-visible {
+    outline: 2px solid #4264e8;
+    outline-offset: 4px;
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  &[aria-busy='true'] {
+    cursor: progress;
+  }
 }
 
-.button:hover:not(:disabled) {
-  background: #3353d1;
+.primary {
+  background: #4264e8;
+  color: white;
+
+  &:hover:not(:disabled):not([aria-disabled='true']) {
+    background: #3353d1;
+  }
 }
 
-.button:focus-visible {
-  outline: 2px solid #4264e8;
-  outline-offset: 4px;
-}
+.secondary {
+  border-color: #bdc9d8;
+  background: #fff;
+  color: #202731;
+  font-weight: 400;
 
-.button:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.button[aria-busy='true'] {
-  cursor: progress;
+  &:hover:not(:disabled):not([aria-disabled='true']) {
+    border-color: #8c9bae;
+    background: #f4f6fa;
+  }
 }
 
 .fullWidth {

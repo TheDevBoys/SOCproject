@@ -5,13 +5,13 @@
   border: 1px solid #d7dee8;
   border-radius: 8px;
   background: #fff;
-}
 
-.card h2 {
-  margin: 0 0 6px;
-  font-size: 22px;
-  line-height: 1.35;
-  font-weight: 650;
+  & h2 {
+    margin: 0 0 6px;
+    font-size: 22px;
+    line-height: 1.35;
+    font-weight: 650;
+  }
 }
 
 .description {
@@ -42,11 +42,11 @@
   text-underline-offset: 2px;
   font-size: 12px;
   cursor: pointer;
-}
 
-.forgot:focus-visible {
-  outline: 2px solid #4264e8;
-  outline-offset: 4px;
+  &:focus-visible {
+    outline: 2px solid #4264e8;
+    outline-offset: 4px;
+  }
 }
 
 .note {

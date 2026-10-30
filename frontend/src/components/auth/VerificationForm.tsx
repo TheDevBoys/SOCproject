@@ -27,7 +27,7 @@ export default function VerificationForm() {
             />
           ))}
         </div>
-        <Button type="button" className={styles.verify}>Verify</Button>
+        <Button variant="primary" type="button" className={styles.verify}>Verify</Button>
         <div className={styles.actions}>
           <button type="button">Use a recovery code</button>
           <Link href="/login">Back to sign in</Link>
