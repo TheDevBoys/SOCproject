@@ -30,6 +30,7 @@ export default function SLAComplianceTable() {
     <Card
       title="SLA compliance per customer"
       titleId="sla-compliance-table"
+      subtitle="lowest compliance first"
       flush
     >
       <div className={styles.tableWrapper}>

@@ -1,6 +1,6 @@
 .dropDown {
-  width: 100%;
-  max-width: 300px;
+  width: auto;
+  max-width: 100%;
   min-height: 38px;
   padding: 9px 10px;
   border: 1px solid #bdc9d8;
@@ -10,4 +10,8 @@
   font: inherit;
   font-size: 13px;
   transition: border-color 150ms, box-shadow 150ms;
+}
+
+.fullWidth {
+  width: 100%;
 }

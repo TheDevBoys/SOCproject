@@ -4,17 +4,19 @@ import styles from './Card.module.css'
 type CardProps = {
   title: string
   titleId: string
+  subtitle?: string
   badge?: ReactNode
   children: ReactNode
   className?: string
   flush?: boolean
 }
 
-export default function Card({ title, titleId, badge, children, className, flush = false }: CardProps) {
+export default function Card({ title, titleId, subtitle, badge, children, className, flush = false }: CardProps) {
   return (
     <section className={[styles.card, className].filter(Boolean).join(' ')} aria-labelledby={titleId}>
       <header className={styles.header}>
         <h2 id={titleId}>{title}</h2>
+        {subtitle && <span className={styles.subtitle}>{subtitle}</span>}
         {badge}
       </header>
       <div className={flush ? undefined : styles.body}>{children}</div>

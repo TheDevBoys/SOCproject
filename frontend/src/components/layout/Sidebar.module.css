@@ -116,6 +116,10 @@
   }
 }
 
+.accountLink {
+  margin-top: auto;
+}
+
 .note {
   margin: 10px 0 0;
   padding: 12px 10px 0;
@@ -169,9 +173,7 @@
     padding: 12px 8px;
   }
 
-  & .active {
-    margin-top: auto;
-  }
+
 }
 
 @media (max-width: 700px) {

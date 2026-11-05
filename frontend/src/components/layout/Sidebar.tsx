@@ -1,8 +1,11 @@
+'use client'
+
+import { usePathname } from 'next/navigation'
 import Link from 'next/link'
 import Icon, { type IconName } from '../ui/Icon'
 import styles from './Sidebar.module.css'
 
-const groups: { title: string; items: { label: string; roles: string; icon: IconName }[] }[] = [
+const groups: { title: string; items: { label: string; roles: string; icon: IconName; href?: string }[] }[] = [
   {
     title: 'Workspace',
     items: [
@@ -23,7 +26,7 @@ const groups: { title: string; items: { label: string; roles: string; icon: Icon
   },
   {
     title: 'Reporting',
-    items: [{ label: 'SOC reports', roles: 'account manager, superuser', icon: 'chart' }],
+    items: [{ label: 'SOC reports', roles: 'account manager, superuser', icon: 'chart', href: '/reports' }],
   },
 ]
 
@@ -33,6 +36,9 @@ type SidebarProps = {
 }
 
 export default function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
+  const pathname = usePathname()
+  const accountActive = pathname === '/account' || pathname.startsWith('/account/')
+
   return (
     <aside className={[styles.sidebar, collapsed && styles.collapsed].filter(Boolean).join(' ')}>
       <div className={styles.brand}>
@@ -56,18 +62,33 @@ export default function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
           <section key={group.title} className={styles.group} aria-label={group.title}>
             <h2>{group.title}</h2>
             <ul>
-              {group.items.map(item => (
-                <li key={item.label}>
-                  <button type="button" className={styles.item} aria-disabled="true" aria-label={item.label} title={item.label}>
+              {group.items.map(item => {
+                const label = (
+                  <>
                     <Icon name={item.icon} />
                     <span className={styles.itemLabel}>{item.label}<small>[{item.roles}]</small></span>
-                  </button>
-                </li>
-              ))}
+                  </>
+                )
+                const active = pathname === item.href
+
+                return (
+                  <li key={item.label}>
+                    {item.href ? (
+                      <Link href={item.href} className={[styles.item, active && styles.active].filter(Boolean).join(' ')} aria-current={active ? 'page' : undefined} aria-label={item.label} title={item.label}>
+                        {label}
+                      </Link>
+                    ) : (
+                      <button type="button" className={styles.item} aria-disabled="true" aria-label={item.label} title={item.label}>
+                        {label}
+                      </button>
+                    )}
+                  </li>
+                )
+              })}
             </ul>
           </section>
         ))}
-        <Link href="/account" className={`${styles.item} ${styles.active}`} aria-current="location" aria-label="My account" title="My account">
+        <Link href="/account" className={[styles.item, styles.accountLink, accountActive && styles.active].filter(Boolean).join(' ')} aria-current={accountActive ? 'location' : undefined} aria-label="My account" title="My account">
           <Icon name="user" />
           <span className={styles.itemLabel}>My account<small>[all roles]</small></span>
         </Link>

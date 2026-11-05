@@ -11,7 +11,7 @@ const alerts = [
 
 export default function AlertsChart() {
   return (
-    <Card title="Alerts per day" titleId="alerts-per-day" flush>
+    <Card title="Alerts per day" titleId="alerts-per-day" subtitle="thousands, last 30 days" flush>
       <div className={styles.content}>
         <div className={styles.chart}>
           <div className={styles.yAxis}>

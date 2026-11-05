@@ -9,7 +9,7 @@ export default function Page() {
   return (
     <div>
       <h1>Hello, Next.js!</h1>
-      <p>This is in your face</p>
+      <p>This is in your facex</p>
     </div>
   )
 }

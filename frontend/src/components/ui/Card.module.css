@@ -24,3 +24,8 @@
 .body {
   padding: 20px 16px 16px;
 }
+
+.subtitle {
+  color: #647184;
+  font-size: 12px;
+}

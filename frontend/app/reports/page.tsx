@@ -1,14 +1,20 @@
 'use client'
 
-import { useState, type ReactNode } from 'react'
+import { useState } from 'react'
 import Sidebar from '../../src/components/layout/Sidebar'
 import styles from './page.module.css'
 import DropDown from '../../src/components/ui/DropDown'
 import Button from '../../src/components/ui/Button'
-import Card from '../../src/components/ui/Card'
 import AlertsChart from '../../src/components/reports/AlertsCharts'
 import AlertCaseSummary from '../../src/components/reports/AlertCaseSummary'
 import SLAComplianceTable from '../../src/components/reports/SLAComplianceTable'
+
+const metrics = [
+  { label: 'SLA compliance', value: '97.2%', detail: '279 of 287 cases within SLA' },
+  { label: 'Average first response', value: '06:48', detail: 'min:sec, last 30 days' },
+  { label: 'Average time to contain critical', value: '35 min', detail: 'target: within 1 hour' },
+  { label: 'Alerts closed as false positive', value: '79%', detail: 'of 312 thousand alerts' },
+]
 
 export default function ReportsPage() {
   const [collapsed, setCollapsed] = useState(false)
@@ -18,51 +24,42 @@ export default function ReportsPage() {
       <Sidebar collapsed={collapsed} onToggle={() => setCollapsed(value => !value)} />
       <div className={styles.workspace}>
         <header className={styles.topbar}>
-      
+          <p>Reporting / SOC reports</p>
           <div className={styles.badges}>
             <span>Sample data</span>
-            <span>(NAAM) - Tier 1 - 2FA on</span>
+            <span>A. Mulder - Account manager · 2FA on</span>
           </div>
         </header>
         <main className={styles.main}>
           <div className={styles.reportsHeader}>
-            <h1>SOC reports</h1>
-            <DropDown defaultValue="" className={styles.dropDown}  fullWidth>
-                <option value="">Last 30 days</option>
+            <div>
+              <h1>SOC reports</h1>
+              <p>How the SOC performs over a longer period. The dashboard shows what is happening now; this page shows the trend.</p>
+            </div>
+            <DropDown aria-label="Reporting period" defaultValue="30">
+              <option value="30">Last 30 days</option>
             </DropDown>
           </div>
-          
-          <p>How the SOC performs over a longer period. The dashboard shows what is happening now; this page shows the trend</p>
-          <div className={styles.reportsFilter} aria-label="Report sections">
-            <DropDown defaultValue="" className={styles.dropDown} fullWidth>
-                <option value="">All customers with access (3)</option>
+          <div className={styles.reportsFilter}>
+            <DropDown aria-label="Customer filter" defaultValue="all">
+              <option value="all">All customers with access (3)</option>
             </DropDown>
             <Button variant="secondary" type="button" aria-disabled="true">Export (PDF)</Button>
           </div>
-          <div className={styles.cardContainer}>
-            <Card title="SLA compliance" titleId="sla-compliance">
-              <h2>97.2%</h2>
-              <p>279 of 287 cases within SLA</p>
-            </Card>
-
-            <Card title="Average first response" titleId="average-response">
-              <h2>06:48</h2>
-              <p>min:sec, last 30 days</p>
-            </Card>
-
-            <Card title="Average time to contain critical" titleId="containment-time">
-              <h2>35 min</h2>
-              <p>target: within 1 hour</p>
-            </Card>
-
-            <Card title="Alerts closed as false positive" titleId="false-positive">
-              <h2>79%</h2>
-              <p>of 312 thousand alerts</p>
-            </Card>
-          </div>
+          <dl className={styles.cardContainer}>
+            {metrics.map(metric => (
+              <div key={metric.label} className={styles.metric}>
+                <dt>{metric.label}</dt>
+                <dd>
+                  <strong>{metric.value}</strong>
+                  <span>{metric.detail}</span>
+                </dd>
+              </div>
+            ))}
+          </dl>
           <div className={styles.reportsOverview}>
-          <AlertsChart />
-          <AlertCaseSummary />
+            <AlertsChart />
+            <AlertCaseSummary />
           </div>
           <div className={styles.reportsTable}>
             <SLAComplianceTable />
