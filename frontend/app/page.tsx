@@ -1,3 +1,13 @@
-export default function Page() {
-  return <h1>Hello, Next.js!</h1>
+"use client";
+
+import { useEffect } from "react";
+
+export default function Home() {
+  useEffect(() => {
+    
+    window.location.href = "/homepagina";
+ 
+  }, []);
+
+  return null;
 }
