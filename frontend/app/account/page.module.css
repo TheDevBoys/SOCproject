@@ -9,22 +9,6 @@
   min-width: 0;
 }
 
-.topbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  min-height: 58px;
-  padding: 12px 24px;
-  border-bottom: 1px solid #dce2eb;
-  background: #fff;
-  font-size: 12px;
-
-  & p {
-    margin: 0;
-    color: #647184;
-  }
-}
 
 .badges {
   display: flex;
@@ -197,10 +181,6 @@
     grid-template-columns: 210px minmax(0, 1fr);
   }
 
-  .topbar {
-    flex-wrap: wrap;
-  }
-
   .fields {
     grid-template-columns: 1fr;
   }
@@ -213,10 +193,6 @@
 
   .main {
     padding: 24px 16px;
-  }
-
-  .topbar {
-    padding: 14px 16px;
   }
 
   .avatar {
