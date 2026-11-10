@@ -1,0 +1,68 @@
+.tableWrapper {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.table th:nth-child(4) {
+  width: 40%;
+}
+
+.table th {
+  background-color: #f8fafc;
+  color: #64748b;
+  text-align: left;
+  text-transform: uppercase;
+  font-size: 11px;
+  letter-spacing: 0.5px;
+  padding: 12px;
+  white-space: nowrap;
+}
+
+.table td {
+  padding: 12px;
+  border-top: 1px solid #e5e7eb;
+  white-space: nowrap;
+}
+
+.customerName {
+  font-weight: 600;
+}
+
+.compliance {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  min-width: 180px;
+}
+
+.progress {
+  flex: 1;
+  height: 9px;
+  background-color: #e5e7eb;
+  border-radius: 20px;
+  overflow: hidden;
+}
+
+.progressFill {
+  height: 100%;
+  background-color: #15803d;
+  border-radius: inherit;
+}
+
+.warning {
+  background-color: #eab308;
+}
+
+.footer {
+  margin: 0;
+  padding: 18px 16px;
+  border-top: 1px solid #e5e7eb;
+  color: #64748b;
+  font-size: 12px;
+}

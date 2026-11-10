@@ -1,0 +1,102 @@
+'use client'
+
+import { usePathname } from 'next/navigation'
+import Link from 'next/link'
+import Icon, { type IconName } from '../ui/Icon'
+import styles from './Sidebar.module.css'
+
+const groups: { title: string; items: { label: string; roles: string; icon: IconName; href?: string }[] }[] = [
+  {
+    title: 'Workspace',
+    items: [
+      { label: 'Dashboard', roles: 'all roles', icon: 'dashboard', href: '/dashboard' },
+      { label: 'Alert queue', roles: 'Tier 1–3, engineer, forensics', icon: 'bell', href: '/alert-queue' },
+      { label: 'Cases', roles: 'all roles', icon: 'folder', href: '/cases' },
+    ],
+  },
+  {
+    title: 'Management',
+    items: [
+      { label: 'Customers', roles: 'account manager, superuser', icon: 'building', href: '/customers' },
+      { label: 'Users & roles', roles: 'superuser', icon: 'users', href: '/users-roles' },
+      { label: 'Customer access', roles: 'superuser', icon: 'key', href: '/customer-access' },
+      { label: 'Retention policy', roles: 'superuser', icon: 'clock', href: '/retention-policy' },
+      { label: 'Audit log', roles: 'Tier 3, superuser', icon: 'list', href: '/audit-log' },
+    ],
+  },
+  {
+    title: 'Reporting',
+    items: [{ label: 'SOC reports', roles: 'account manager, superuser', icon: 'chart', href: '/reports' }],
+  },
+]
+
+type SidebarProps = {
+  collapsed?: boolean
+  onToggle?: () => void
+}
+
+export default function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
+  const pathname = usePathname()
+  const accountActive = pathname === '/account' || pathname.startsWith('/account/')
+
+  return (
+    <aside className={[styles.sidebar, collapsed && styles.collapsed].filter(Boolean).join(' ')}>
+      <div className={styles.brand}>
+        <span className={styles.brandIcon} aria-hidden="true">{'</>'}</span>
+        <span className={styles.brandName}><span className={styles.accent}>Dev</span>Boys</span>
+      </div>
+      <button
+        type="button"
+        className={styles.collapse}
+        onClick={onToggle}
+        aria-expanded={!collapsed}
+        aria-controls="main-navigation"
+        aria-label={collapsed ? 'Expand menu' : 'Collapse menu'}
+        title={collapsed ? 'Expand menu' : 'Collapse menu'}
+      >
+        <Icon name="collapse" />
+        <span className={styles.menuLabel}>Collapse menu</span>
+      </button>
+      <nav id="main-navigation" className={styles.navigation} aria-label="Main navigation">
+        {groups.map(group => (
+          <section key={group.title} className={styles.group} aria-label={group.title}>
+            <h2>{group.title}</h2>
+            <ul>
+              {group.items.map(item => {
+                const label = (
+                  <>
+                    <Icon name={item.icon} />
+                    <span className={styles.itemLabel}>{item.label}<small>[{item.roles}]</small></span>
+                  </>
+                )
+                const active = pathname === item.href
+
+                return (
+                  <li key={item.label}>
+                    {item.href ? (
+                      <Link href={item.href} className={[styles.item, active && styles.active].filter(Boolean).join(' ')} aria-current={active ? 'page' : undefined} aria-label={item.label} title={item.label}>
+                        {label}
+                      </Link>
+                    ) : (
+                      <button type="button" className={styles.item} aria-disabled="true" aria-label={item.label} title={item.label}>
+                        {label}
+                      </button>
+                    )}
+                  </li>
+                )
+              })}
+            </ul>
+          </section>
+        ))}
+        <Link href="/account" className={[styles.item, styles.accountLink, accountActive && styles.active].filter(Boolean).join(' ')} aria-current={accountActive ? 'location' : undefined} aria-label="My account" title="My account">
+          <Icon name="user" />
+          <span className={styles.itemLabel}>My account<small>[all roles]</small></span>
+        </Link>
+      </nav>
+      <p className={styles.note}>
+        Brackets show which roles can see each item. For all other roles it is locked in code.
+        Superusers see customer data only after an access request.
+      </p>
+    </aside>
+  )
+}
