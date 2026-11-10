@@ -6,5 +6,8 @@ public enum UserRole
     Tier1,
     Tier2,
     Tier3,
+    Engineer,
+    AccountManager,
+    ForensicAnalyst,
     Customer
 }
