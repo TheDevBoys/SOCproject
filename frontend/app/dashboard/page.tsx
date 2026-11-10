@@ -14,16 +14,25 @@ export default function HomePage() {
         <div className={styles.card}>
           <h2>Open Alerts</h2>
         </div>
+
         <div className={styles.card}>
           <h2>Open Cases</h2>
-          
+
         </div>
+
         <div className={styles.card}>
           <h2>SLA's at risk</h2>
         </div>
-          <div className={styles.card}>
+
+        <div className={styles.card}>
           <h2>Average run time</h2>
         </div>
+
+      </div>
+        <div className={styles.dashboardCharts}>
+          <div className={styles.chart}>
+            <h2>Alerts by type</h2>
+          </div>
       </div>
       </div>
     </div>
