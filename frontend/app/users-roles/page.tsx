@@ -1,32 +1,13 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Sidebar from '../../src/components/layout/Sidebar'
 import Button from '../../src/components/ui/Button'
 import styles from './page.module.css'
 import PageTopbar from '../../src/components/layout/PageTopbar'
+import { getUsers } from '../../src/services/users'
+import type { User, UserRole } from '../../src/types/user'
 
-type UserStatus = 'Active' | 'Invited'
-
-type User = {
-  name: string
-  role: string
-  customerAccess: string
-  twoFactor: boolean
-  lastSignIn: string
-  status: UserStatus
-}
-
-const users: User[] = [
-  { name: 'M. Jansen', role: 'Tier 1 analyst', customerAccess: '14 customers', twoFactor: true, lastSignIn: '06-10 08:02', status: 'Active' },
-  { name: 'S. Bakker', role: 'Tier 1 analyst', customerAccess: '14 customers', twoFactor: true, lastSignIn: '06-10 07:58', status: 'Active' }, 
-  { name: 'R. Visser', role: 'Tier 2 analyst', customerAccess: '22 customers', twoFactor: true, lastSignIn: '06-10 08:15', status: 'Active'},
-  { name: 'L. Smit', role: 'Tier 3 analyst', customerAccess: '31 customers', twoFactor: true, lastSignIn: '05-10 17:48', status: 'Active'},
-  { name: 'P. de Wit', role: 'Engineer', customerAccess: 'On request', twoFactor: true, lastSignIn: '06-10 09:01', status: 'Active'},
-  { name: 'A. Mulder', role: 'Account manager',customerAccess: '3 customers',twoFactor: true, lastSignIn: '05-10 16:12', status: 'Active'},
-  { name: 'K. Hendriks', role: 'Superuser', customerAccess: 'On request, logged', twoFactor: true, lastSignIn: '06-10 08:30', status: 'Active'},
-  { name: 'N. Prins', role: 'Forensic analyst (custom)', customerAccess: '2 customers', twoFactor: false, lastSignIn: 'Never signed in', status: 'Invited'},
-]
 
 type Permission = {
   name: string
@@ -59,8 +40,41 @@ const roles = [
   'Forensics',
 ]
 
+const roleLabels: Record<UserRole, string> = {
+  Superuser: 'Superuser',
+  Tier1: 'Tier 1 analyst',
+  Tier2: 'Tier 2 analyst',
+  Tier3: 'Tier 3 analyst',
+  Engineer: 'Engineer',
+  AccountManager: 'Account manager',
+  ForensicAnalyst: 'Forensic analyst (custom)',
+  Customer: 'Customer',
+}
+
+function formatLastSignIn(lastSignIn: string | null): string {
+  if (lastSignIn === null) {
+    return 'Never signed in'
+  }
+
+  return new Date(lastSignIn).toLocaleString()
+}
 export default function UsersRolesPage() {
-  const [collapsed, setCollapsed] = useState(false)
+const [users, setUsers] = useState<User[]>([])
+const [loading, setLoading] = useState(true)
+const [error, setError] = useState<string | null>(null)
+const [collapsed, setCollapsed] = useState(false)
+
+  useEffect(() => {
+    getUsers()
+      .then(setUsers)
+    .catch(error => {
+      console.error('Failed to load users:', error)
+      setError('Could not load users.')
+    })
+    .finally(() => {
+      setLoading(false)
+    })
+}, [])
 
   return (
     <div className={[ styles.shell, collapsed && styles.collapsedShell,].filter(Boolean).join(' ')}>
@@ -72,6 +86,7 @@ export default function UsersRolesPage() {
             <h1>Users & roles</h1>
             <p>Who can do what. Roles set the permissions; the link to customers decides which data someone sees.</p>
           </div>
+
           <section className={styles.card} aria-labelledby="users-heading">
             <div className={styles.cardHeader}>
               <div className={styles.cardTitle}>
@@ -80,7 +95,12 @@ export default function UsersRolesPage() {
               </div>
               <Button type="button">Invite user</Button>
             </div>
-            <div className={styles.tableWrapper}>
+            {loading ? (
+  <p>Loading users...</p>
+) : error ? (
+  <p role="alert">{error}</p>
+) : (
+  <div className={styles.tableWrapper}>
               <table className={styles.table}>
                 <thead>
                   <tr>
@@ -94,18 +114,19 @@ export default function UsersRolesPage() {
                 </thead>
                 <tbody>
                   {users.map(user => (
-                    <tr key={user.name}>
+                    <tr key={user.id}>
                       <td className={styles.userName}>{user.name}</td>
-                      <td>{user.role}</td>
+                      <td>{roleLabels[user.role]}</td>
                       <td>{user.customerAccess}</td>
                       <td><span className={user.twoFactor ? styles.activeBadge : styles.warningBadge}>{user.twoFactor ? 'Active' : 'Not set up'}</span></td>
-                      <td className={styles.muted}>{user.lastSignIn}</td>
+                      <td className={styles.muted}>{formatLastSignIn(user.lastSignIn)}</td>
                       <td>{user.status}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
-            </div>
+              </div>
+            )}
           </section>
           <section className={styles.card} aria-labelledby="roles-heading">
             <div className={styles.cardHeader}>
