@@ -9,19 +9,19 @@ const groups: { title: string; items: { label: string; roles: string; icon: Icon
   {
     title: 'Workspace',
     items: [
-      { label: 'Dashboard', roles: 'all roles', icon: 'dashboard' },
-      { label: 'Alert queue', roles: 'Tier 1–3, engineer, forensics', icon: 'bell' },
-      { label: 'Cases', roles: 'all roles', icon: 'folder' },
+      { label: 'Dashboard', roles: 'all roles', icon: 'dashboard', href: '/dashboard' },
+      { label: 'Alert queue', roles: 'Tier 1–3, engineer, forensics', icon: 'bell', href: '/alert-queue' },
+      { label: 'Cases', roles: 'all roles', icon: 'folder', href: '/cases' },
     ],
   },
   {
     title: 'Management',
     items: [
-      { label: 'Customers', roles: 'account manager, superuser', icon: 'building' },
-      { label: 'Users & roles', roles: 'superuser', icon: 'users' },
-      { label: 'Customer access', roles: 'superuser', icon: 'key' },
-      { label: 'Retention policy', roles: 'superuser', icon: 'clock' },
-      { label: 'Audit log', roles: 'Tier 3, superuser', icon: 'list' },
+      { label: 'Customers', roles: 'account manager, superuser', icon: 'building', href: '/customers' },
+      { label: 'Users & roles', roles: 'superuser', icon: 'users', href: '/users-roles' },
+      { label: 'Customer access', roles: 'superuser', icon: 'key', href: '/customer-access' },
+      { label: 'Retention policy', roles: 'superuser', icon: 'clock', href: '/retention-policy' },
+      { label: 'Audit log', roles: 'Tier 3, superuser', icon: 'list', href: '/audit-log' },
     ],
   },
   {

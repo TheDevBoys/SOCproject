@@ -8,6 +8,7 @@ import Button from '../../src/components/ui/Button'
 import AlertsChart from '../../src/components/reports/AlertsCharts'
 import AlertCaseSummary from '../../src/components/reports/AlertCaseSummary'
 import SLAComplianceTable from '../../src/components/reports/SLAComplianceTable'
+import PageTopbar from '../../src/components/layout/PageTopbar'
 
 const metrics = [
   { label: 'SLA compliance', value: '97.2%', detail: '279 of 287 cases within SLA' },
@@ -23,13 +24,7 @@ export default function ReportsPage() {
     <div className={[styles.shell, collapsed && styles.collapsedShell].filter(Boolean).join(' ')}>
       <Sidebar collapsed={collapsed} onToggle={() => setCollapsed(value => !value)} />
       <div className={styles.workspace}>
-        <header className={styles.topbar}>
-          <p>Reporting / SOC reports</p>
-          <div className={styles.badges}>
-            <span>Sample data</span>
-            <span>A. Mulder - Account manager · 2FA on</span>
-          </div>
-        </header>
+        <PageTopbar title="Reporting / SOC reports" userName="A. Mulder" userRole="Account manager" twoFactorEnabled={true} sampleData={true} />
         <main className={styles.main}>
           <div className={styles.reportsHeader}>
             <div>

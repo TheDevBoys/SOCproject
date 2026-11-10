@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import Sidebar from '../../src/components/layout/Sidebar'
 import styles from './page.module.css'
+import PageTopbar from '../../src/components/layout/PageTopbar'
 
 export default function AccountLayout({ children }: { children: ReactNode }) {
   const [collapsed, setCollapsed] = useState(false)
@@ -14,13 +15,7 @@ export default function AccountLayout({ children }: { children: ReactNode }) {
     <div className={[styles.shell, collapsed && styles.collapsedShell].filter(Boolean).join(' ')}>
       <Sidebar collapsed={collapsed} onToggle={() => setCollapsed(value => !value)} />
       <div className={styles.workspace}>
-        <header className={styles.topbar}>
-          <p>My account / {isSecurity ? 'Security' : 'Profile'}</p>
-          <div className={styles.badges}>
-            <span>Sample data</span>
-            <span>(NAAM) - Tier 1 - 2FA on</span>
-          </div>
-        </header>
+        <PageTopbar title={`My account / ${isSecurity ? 'Security' : 'Profile'}`} userName="(NAAM)" userRole="Tier 1" twoFactorEnabled={true} sampleData={true} />
         <main className={styles.main}>
           <h1>My account</h1>
           <nav className={styles.tabs} aria-label="Account sections">
