@@ -27,6 +27,8 @@ public class SocDbContext(DbContextOptions<SocDbContext> options) : DbContext(op
             entity.Property(u => u.Status)
                 .HasConversion<string>()
                 .HasMaxLength(20);
+                
+            entity.HasData(SeedUsers.GetUsers());  
         });
     }
 
