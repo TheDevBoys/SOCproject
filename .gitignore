@@ -1,6 +1,11 @@
 # .NET build output
 bin/
 obj/
+**/bin/
+**/obj/
+
+# Node
+/node_modules/
 
 # IDE / OS
 .vs/

@@ -14,7 +14,6 @@ public class Ticket
     public Customer Customer {get; set;} = null!; // customer 1-0.* ticket 
 
     public int? AssigndeUserId { get; set; } // int? zorgt ervoor dat kolom leeg mag zijn.
-    public User? AssignedUser {get; set;}// user 0..1-0.* ticket assgined user mag leeg zijn, ticket mag ook leeg zijn.
     public int? RetentionPolicyId { get; set; }
     public RetentionPolicy? RetentionPolicy { get; set; }
 

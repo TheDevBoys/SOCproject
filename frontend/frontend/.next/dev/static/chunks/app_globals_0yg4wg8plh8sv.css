@@ -1,0 +1,17 @@
+/* [project]/app/globals.css [app-client] (css) */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  color: #202731;
+  -webkit-font-smoothing: antialiased;
+  margin: 0;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+button, input {
+  font-family: inherit;
+}
+
+/*# sourceMappingURL=app_globals_0yg4wg8plh8sv.css.map*/
