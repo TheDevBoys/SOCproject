@@ -13,7 +13,8 @@ public class Ticket
     public int CustomerId { get; set; }
     public Customer Customer {get; set;} = null!; // customer 1-0.* ticket 
 
-    public int? AssigndeUserId { get; set; } // int? zorgt ervoor dat kolom leeg mag zijn.
+    public Guid? AssignedUserId { get; set; } // ? zorgt ervoor dat kolom leeg mag zijn.
+    public User? AssignedUser { get; set; } // User 0..1 - 0..* Ticket: a ticket can be unassigned
     public int? RetentionPolicyId { get; set; }
     public RetentionPolicy? RetentionPolicy { get; set; }
 
