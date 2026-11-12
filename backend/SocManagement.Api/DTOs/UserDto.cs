@@ -11,4 +11,12 @@ public class UserDto
     public string Email { get; set; } = string.Empty;
 
     public UserRole Role { get; set; }
+
+    public string CustomerAccess { get; set; } = string.Empty;
+
+    public bool TwoFactor { get; set; }
+
+    public DateTime? LastSignIn { get; set; }
+
+    public UserStatus Status { get; set; }
 }
