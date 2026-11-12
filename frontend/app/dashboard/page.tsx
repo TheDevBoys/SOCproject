@@ -11,13 +11,14 @@ export default function HomePage() {
         <h1 className={styles.title}>Dashboard</h1>
         <p className={styles.description}>What needs attention now, sorted by SLA pressure. </p>
       <div className={styles.dashboardCards}>
+       <ul>
+
         <div className={styles.card}>
           <h2>Open Alerts</h2>
         </div>
 
         <div className={styles.card}>
           <h2>Open Cases</h2>
-
         </div>
 
         <div className={styles.card}>
@@ -27,14 +28,37 @@ export default function HomePage() {
         <div className={styles.card}>
           <h2>Average run time</h2>
         </div>
+      </ul>
 
-      </div>
+      <ul>
+        <div className={styles.dashboardTable}>
+          <div className={styles.table}>
+            <h2>Cases at SLA risk</h2>
+          </div>
+        </div>
+
         <div className={styles.dashboardCharts}>
           <div className={styles.chart}>
-            <h2>Alerts by type</h2>
+            <h2>Incoming Alerts, last 24 hours</h2>
           </div>
       </div>
+      </ul>
+
+      <ul>
+        <div className={styles.dashboardCharts}>
+          <div className={styles.chart}>
+            <h3>Open work per tier</h3>
+          </div>
+        </div>
+
+        <div className={styles.dashboardCharts}>
+          <div className={styles.chart}>
+            <h3>Open alerts by source</h3>
+          </div>
       </div>
+      </ul>
+    </div>
+    </div>
     </div>
   );
 }
