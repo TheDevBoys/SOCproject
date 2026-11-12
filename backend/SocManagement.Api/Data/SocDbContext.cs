@@ -6,6 +6,17 @@ namespace SocManagement.Api.Data;
 public class SocDbContext(DbContextOptions<SocDbContext> options) : DbContext(options)
 {
     public DbSet<User> Users => Set<User>();
+
+    public DbSet<Ticket> Tickets => Set<Ticket>();
+
+    public DbSet<Customer> Customers => Set<Customer>();
+    public DbSet<Alert> Alerts => Set<Alert>();
+    public DbSet<Communication> Communications => Set<Communication>();
+    public DbSet<TicketHistory> TicketHistories => Set<TicketHistory>();
+    public DbSet<SLA> Slas => Set<SLA>();
+    public DbSet<RetentionPolicy> RetentionPolicies => Set<RetentionPolicy>();
+    
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<User>(entity =>
