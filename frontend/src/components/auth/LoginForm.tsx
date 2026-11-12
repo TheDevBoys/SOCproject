@@ -13,6 +13,9 @@ export default function LoginForm() {
           <TextField id="password" name="password" label="Password" type="password" autoComplete="current-password" placeholder="Password" required />
         </div>
         <Button variant="primary" className={styles.submit} type="button">Sign in</Button>
+        <button className={styles.register} type="button" >
+          No account? Register
+        </button>
         <button className={styles.forgot} type="button">
           Forgot your password?
         </button>
