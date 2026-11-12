@@ -278,7 +278,112 @@ namespace SocManagement.Api.Migrations
                     b.HasIndex("Email")
                         .IsUnique();
 
-                    b.ToTable("Users");
+                    b.ToTable("Users", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("cff2ace7-00ab-487d-b2eb-d3681e89862f"),
+                            CustomerAccess = "14 customers",
+                            Email = "m.jansen@soc.nl",
+                            FailedLoginAttempts = 0,
+                            LastSignIn = new DateTime(2026, 10, 6, 8, 2, 0, 0, DateTimeKind.Utc),
+                            MfaEnabled = true,
+                            Name = "M. Jansen",
+                            PasswordHash = "AQAAAAIAAYagAAAAEMI61lHn1YCfav7Eeo0QX8LrYAJnScraLLCt5t44psyOYf1Vi2jrJfele0pjqcufgA==",
+                            Role = "Tier1",
+                            Status = "Active"
+                        },
+                        new
+                        {
+                            Id = new Guid("d6596d4a-33dd-4b5c-8d8a-7a148ebbde8a"),
+                            CustomerAccess = "14 customers",
+                            Email = "s.bakker@soc.nl",
+                            FailedLoginAttempts = 0,
+                            LastSignIn = new DateTime(2026, 10, 6, 7, 58, 0, 0, DateTimeKind.Utc),
+                            MfaEnabled = true,
+                            Name = "S. Bakker",
+                            PasswordHash = "AQAAAAIAAYagAAAAEMI61lHn1YCfav7Eeo0QX8LrYAJnScraLLCt5t44psyOYf1Vi2jrJfele0pjqcufgA==",
+                            Role = "Tier1",
+                            Status = "Active"
+                        },
+                        new
+                        {
+                            Id = new Guid("a4c85f52-e4b9-4759-86ac-08d43e2ced7d"),
+                            CustomerAccess = "22 customers",
+                            Email = "r.visser@soc.nl",
+                            FailedLoginAttempts = 0,
+                            LastSignIn = new DateTime(2026, 10, 6, 8, 15, 0, 0, DateTimeKind.Utc),
+                            MfaEnabled = true,
+                            Name = "R. Visser",
+                            PasswordHash = "AQAAAAIAAYagAAAAEMI61lHn1YCfav7Eeo0QX8LrYAJnScraLLCt5t44psyOYf1Vi2jrJfele0pjqcufgA==",
+                            Role = "Tier2",
+                            Status = "Active"
+                        },
+                        new
+                        {
+                            Id = new Guid("4d7bc960-9820-4809-ab0e-eecc0619381d"),
+                            CustomerAccess = "31 customers",
+                            Email = "l.smit@soc.nl",
+                            FailedLoginAttempts = 0,
+                            LastSignIn = new DateTime(2026, 10, 5, 17, 48, 0, 0, DateTimeKind.Utc),
+                            MfaEnabled = true,
+                            Name = "L. Smit",
+                            PasswordHash = "AQAAAAIAAYagAAAAEMI61lHn1YCfav7Eeo0QX8LrYAJnScraLLCt5t44psyOYf1Vi2jrJfele0pjqcufgA==",
+                            Role = "Tier3",
+                            Status = "Active"
+                        },
+                        new
+                        {
+                            Id = new Guid("f089b422-d95e-45c4-a65e-03e8c83dfca6"),
+                            CustomerAccess = "On request",
+                            Email = "p.dewit@soc.nl",
+                            FailedLoginAttempts = 0,
+                            LastSignIn = new DateTime(2026, 10, 6, 9, 1, 0, 0, DateTimeKind.Utc),
+                            MfaEnabled = true,
+                            Name = "P. de Wit",
+                            PasswordHash = "AQAAAAIAAYagAAAAEMI61lHn1YCfav7Eeo0QX8LrYAJnScraLLCt5t44psyOYf1Vi2jrJfele0pjqcufgA==",
+                            Role = "Engineer",
+                            Status = "Active"
+                        },
+                        new
+                        {
+                            Id = new Guid("7d26ff69-db3e-4b3b-8e4f-7f1abb78ba05"),
+                            CustomerAccess = "3 customers",
+                            Email = "a.mulder@soc.nl",
+                            FailedLoginAttempts = 0,
+                            LastSignIn = new DateTime(2026, 10, 5, 16, 12, 0, 0, DateTimeKind.Utc),
+                            MfaEnabled = true,
+                            Name = "A. Mulder",
+                            PasswordHash = "AQAAAAIAAYagAAAAEMI61lHn1YCfav7Eeo0QX8LrYAJnScraLLCt5t44psyOYf1Vi2jrJfele0pjqcufgA==",
+                            Role = "AccountManager",
+                            Status = "Active"
+                        },
+                        new
+                        {
+                            Id = new Guid("cd1f2a56-fbf4-48b0-ae43-c99c104dc025"),
+                            CustomerAccess = "On request, logged",
+                            Email = "k.hendriks@soc.nl",
+                            FailedLoginAttempts = 0,
+                            LastSignIn = new DateTime(2026, 10, 6, 8, 30, 0, 0, DateTimeKind.Utc),
+                            MfaEnabled = true,
+                            Name = "K. Hendriks",
+                            PasswordHash = "AQAAAAIAAYagAAAAEMI61lHn1YCfav7Eeo0QX8LrYAJnScraLLCt5t44psyOYf1Vi2jrJfele0pjqcufgA==",
+                            Role = "Superuser",
+                            Status = "Active"
+                        },
+                        new
+                        {
+                            Id = new Guid("41d1e697-839a-4b88-a502-41a09fdf36c3"),
+                            CustomerAccess = "2 customers",
+                            Email = "n.prins@soc.nl",
+                            FailedLoginAttempts = 0,
+                            MfaEnabled = false,
+                            Name = "N. Prins",
+                            PasswordHash = "AQAAAAIAAYagAAAAEMI61lHn1YCfav7Eeo0QX8LrYAJnScraLLCt5t44psyOYf1Vi2jrJfele0pjqcufgA==",
+                            Role = "ForensicAnalyst",
+                            Status = "Invited"
+                        });
                 });
 
             modelBuilder.Entity("SocManagement.Api.Models.Alert", b =>
