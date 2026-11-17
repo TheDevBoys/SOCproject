@@ -1,3 +1,14 @@
-/node_modules/
+# .NET build output
+bin/
+obj/
 **/bin/
 **/obj/
+
+# Node
+/node_modules/
+
+# IDE / OS
+.vs/
+.idea/
+.DS_Store
+*.user

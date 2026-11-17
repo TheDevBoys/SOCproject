@@ -1,5 +1,8 @@
 using System.Text.Json.Serialization;
 using SocManagement.Api.Services;
+using Microsoft.EntityFrameworkCore;
+using SocManagement.Api.Data;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -12,6 +15,8 @@ builder.Services.AddControllers()
 
 builder.Services.AddSwaggerGen();
 builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddDbContext<SocDbContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("SocDb")));
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("Frontend", policy =>
