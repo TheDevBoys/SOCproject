@@ -1,0 +1,333 @@
+/* =========================
+   Page shell (same as audit log)
+========================= */
+
+.shell {
+  display: grid;
+  grid-template-columns: 232px minmax(0, 1fr);
+  min-height: 100svh;
+  background: #f4f6fa;
+}
+
+.collapsedShell {
+  grid-template-columns: 64px minmax(0, 1fr);
+}
+
+.workspace {
+  min-width: 0;
+}
+
+.main {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-width: 0;
+  padding: 24px 24px 48px;
+}
+
+.pageHeader {
+  & h1 {
+    margin: 4px 0 6px;
+    color: #202731;
+    font-size: 22px;
+  }
+
+  & p {
+    margin: 0;
+    color: #647184;
+    font-size: 13px;
+    line-height: 1.5;
+  }
+}
+
+.columns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+  gap: 20px;
+}
+
+/* =========================
+   Tables
+========================= */
+
+.tableScroll {
+  overflow-x: auto;
+
+  &:focus-visible {
+    outline: 2px solid #4264e8;
+    outline-offset: 2px;
+  }
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 13px;
+
+  & thead th {
+    padding: 12px;
+    background: #f7f9fb;
+    color: #647184;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  & tbody th,
+  & td {
+    padding: 13px 12px;
+    border-top: 1px solid #e4e9f0;
+    color: #202731;
+    line-height: 1.4;
+  }
+
+  & tbody th {
+    font-weight: 600;
+  }
+
+  & tbody tr:hover {
+    background: #f8fafc;
+  }
+}
+
+.cardNote {
+  margin: 0;
+  padding: 16px;
+  border-top: 1px solid #e4e9f0;
+  color: #647184;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+/* =========================
+   Pills and badges
+========================= */
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 9px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.short {
+  background: #e3ebff;
+  color: #2f4fc4;
+}
+
+.long {
+  background: #ece8fb;
+  color: #4b3a99;
+}
+
+.mixed {
+  background: #e8e8fb;
+  color: #3e3f9e;
+}
+
+.neutral {
+  background: #eef2f7;
+  color: #202731;
+}
+
+.successBadge,
+.warningBadge {
+  padding: 4px 9px;
+  border-radius: 16px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.successBadge {
+  background: #e2f5e8;
+  color: #286940;
+}
+
+.warningBadge {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.headerAction {
+  min-height: 32px;
+  margin-left: auto;
+  padding: 6px 12px;
+}
+
+.number {
+  font-family: ui-monospace, SFMono-Regular, Consolas, 'Liberation Mono', monospace;
+}
+
+/* =========================
+   Deletion run
+========================= */
+
+.details {
+  display: grid;
+  gap: 12px;
+  margin: 0 0 20px;
+  font-size: 13px;
+
+  & div {
+    display: grid;
+    grid-template-columns: minmax(110px, 0.4fr) 1fr;
+    gap: 12px;
+  }
+
+  & dt {
+    color: #647184;
+  }
+
+  & dd {
+    margin: 0;
+  }
+}
+
+.bars {
+  display: grid;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.bar {
+  display: grid;
+  gap: 8px;
+}
+
+.barLabel {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 13px;
+}
+
+.track {
+  height: 8px;
+  overflow: hidden;
+  border-radius: 8px;
+  background: #e4e9f0;
+}
+
+.fill {
+  height: 100%;
+  border-radius: 8px;
+
+  &.short {
+    background: #4264e8;
+  }
+
+  &.long {
+    background: #6a4fbf;
+  }
+}
+
+.runActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+
+  & p {
+    margin: 0;
+    color: #647184;
+    font-size: 12px;
+    line-height: 1.5;
+  }
+}
+
+/* =========================
+   Legal hold
+========================= */
+
+.holdList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  & li {
+    padding: 14px 16px;
+    border-bottom: 1px solid #e4e9f0;
+  }
+}
+
+.holdTitle {
+  margin: 0 0 4px;
+  font-size: 14px;
+}
+
+.caseLink {
+  color: #4264e8;
+  font-weight: 600;
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+
+  &:focus-visible {
+    outline: 2px solid #4264e8;
+    outline-offset: 2px;
+  }
+}
+
+.holdMeta {
+  margin: 0;
+  color: #647184;
+  font-size: 12px;
+}
+
+.holdFooter {
+  display: grid;
+  justify-items: start;
+  gap: 12px;
+  padding: 16px;
+
+  & p {
+    margin: 0;
+    color: #647184;
+    font-size: 12px;
+    line-height: 1.5;
+  }
+}
+
+/* =========================
+   Responsive
+========================= */
+
+@media (max-width: 1100px) {
+  .columns {
+    grid-template-columns: 1fr;
+  }
+
+  .table {
+    min-width: 750px;
+  }
+}
+
+@media (max-width: 700px) {
+  .shell {
+    grid-template-columns: 180px minmax(0, 1fr);
+  }
+
+  .collapsedShell {
+    grid-template-columns: 64px minmax(0, 1fr);
+  }
+
+  .main {
+    padding: 16px;
+  }
+}
+
+@media (max-width: 500px) {
+  .details div {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+}
