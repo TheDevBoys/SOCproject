@@ -2,7 +2,7 @@ import type { SelectHTMLAttributes } from 'react'
 import styles from './DropDown.module.css'
 
 type DropDownProps = SelectHTMLAttributes<HTMLSelectElement> & {
-  id: string
+  id?: string
   label?: string
   error?: string
   containerClassName?: string
@@ -22,6 +22,8 @@ export default function DropDown({
   children,
   ...props
 }: DropDownProps) {
+  const errorId = error && id ? `${id}-error` : undefined
+
   return (
     <div className={[styles.field, containerClassName].filter(Boolean).join(' ')}>
       {label && (<label className={styles.label} htmlFor={id}>{label}</label>)}
@@ -32,7 +34,7 @@ export default function DropDown({
         className={[styles.dropDown, fullWidth && styles.fullWidth, className].filter(Boolean).join(' ')}
         aria-invalid={error ? true : props['aria-invalid']}
         aria-describedby={
-          [props['aria-describedby'], error ? `${id}-error` : undefined]
+          [props['aria-describedby'], errorId]
             .filter(Boolean)
             .join(' ') || undefined
         }
@@ -40,7 +42,7 @@ export default function DropDown({
         {children}
       </select>
       {error && (
-        <span id={`${id}-error`} className={styles.error} role="alert">
+        <span id={errorId} className={styles.error} role="alert">
           {error}
         </span>
       )}
