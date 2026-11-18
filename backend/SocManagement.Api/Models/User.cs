@@ -16,6 +16,10 @@ public class User
 
     public bool MfaEnabled { get; set; }
 
+    public string? MfaSecret { get; set; }
+
+    public bool MfaConfirmed { get; set; }
+
     public int FailedLoginAttempts { get; set; }
 
     public DateTime? LockedUntil { get; set; }

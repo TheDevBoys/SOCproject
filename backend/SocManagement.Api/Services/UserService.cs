@@ -1,111 +1,125 @@
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using SocManagement.Api.Data;
 using SocManagement.Api.DTOs;
 using SocManagement.Api.Enums;
+using SocManagement.Api.Models;
 
 namespace SocManagement.Api.Services;
 
 public class UserService : IUserService
 {
-    private static readonly List<UserDto> Users =
-    [
-        new()
-        {
-            Id = Guid.NewGuid(),
-            Name = "M. Jansen",
-            Email = "m.jansen@soc.nl",
-            Role = UserRole.Tier1,
-            CustomerAccess = "14 customers",
-            TwoFactor = true,
-            LastSignIn = new DateTime(2026, 10, 6, 8, 2, 0),
-            Status = UserStatus.Active
-        },
+    private readonly SocDbContext _context;
+    private readonly IPasswordHasher<User> _passwordHasher;
 
-        new()
-        {
-            Id = Guid.NewGuid(),
-            Name = "S. Bakker",
-            Email = "s.bakker@soc.nl",
-            Role = UserRole.Tier1,
-            CustomerAccess = "14 customers",
-            TwoFactor = true,
-            LastSignIn = new DateTime(2026, 10, 6, 7, 58, 0),
-            Status = UserStatus.Active
-        },
-
-        new()
-        {
-            Id = Guid.NewGuid(),
-            Name = "R. Visser",
-            Email = "r.visser@soc.nl",
-            Role = UserRole.Tier2,
-            CustomerAccess = "22 customers",
-            TwoFactor = true,
-            LastSignIn = new DateTime(2026, 10, 6, 8, 15, 0),
-            Status = UserStatus.Active
-        },
-
-        new()
-        {
-            Id = Guid.NewGuid(),
-            Name = "L. Smit",
-            Email = "l.smit@soc.nl",
-            Role = UserRole.Tier3,
-            CustomerAccess = "31 customers",
-            TwoFactor = true,
-            LastSignIn = new DateTime(2026, 10, 5, 17, 48, 0),
-            Status = UserStatus.Active
-        },
-
-        new()
-        {
-            Id = Guid.NewGuid(),
-            Name = "P. de Wit",
-            Email = "p.dewit@soc.nl",
-            Role = UserRole.Engineer,
-            CustomerAccess = "On request",
-            TwoFactor = true,
-            LastSignIn = new DateTime(2026, 10, 6, 9, 1, 0),
-            Status = UserStatus.Active
-        },
-
-        new()
-        {
-            Id = Guid.NewGuid(),
-            Name = "A. Mulder",
-            Email = "a.mulder@soc.nl",
-            Role = UserRole.AccountManager,
-            CustomerAccess = "3 customers",
-            TwoFactor = true,
-            LastSignIn = new DateTime(2026, 10, 5, 16, 12, 0),
-            Status = UserStatus.Active
-        },
-
-        new()
-        {
-            Id = Guid.NewGuid(),
-            Name = "K. Hendriks",
-            Email = "k.hendriks@soc.nl",
-            Role = UserRole.Superuser,
-            CustomerAccess = "On request, logged",
-            TwoFactor = true,
-            LastSignIn = new DateTime(2026, 10, 6, 8, 30, 0),
-            Status = UserStatus.Active
-        },
-
-        new()
-        {
-            Id = Guid.NewGuid(),
-            Name = "N. Prins",
-            Email = "n.prins@soc.nl",
-            Role = UserRole.ForensicAnalyst,
-            CustomerAccess = "2 customers",
-            TwoFactor = false,
-            LastSignIn = null,
-            Status = UserStatus.Invited
-        },
-    ];
-
-    public List<UserDto> GetAll()
+    public UserService(SocDbContext context, IPasswordHasher<User> passwordHasher)
     {
-        return Users;
+        _context = context;
+        _passwordHasher = passwordHasher;
     }
+
+    public async Task<List<UserDto>> GetAllAsync()
+    {
+        var users = await _context.Users
+            .AsNoTracking()
+            .OrderBy(u => u.Name)
+            .ToListAsync();
+
+        return users.Select(ToDto).ToList();
+    }
+
+    public async Task<UserDto?> GetByIdAsync(Guid id)
+    {
+        var user = await _context.Users
+            .AsNoTracking()
+            .FirstOrDefaultAsync(u => u.Id == id);
+
+        return user == null ? null : ToDto(user);
+    }
+
+    public async Task<UserDto?> CreateAsync(CreateUserDto request)
+    {
+        var email = request.Email.Trim();
+
+        if (await EmailInUseAsync(email))
+        {
+            return null;
+        }
+
+        var user = new User
+        {
+            Id = Guid.NewGuid(),
+            Name = request.Name.Trim(),
+            Email = email,
+            Role = request.Role,
+            MfaEnabled = true,
+            Status = UserStatus.Active
+        };
+
+        user.PasswordHash = _passwordHasher.HashPassword(user, request.Password);
+
+        _context.Users.Add(user);
+        await _context.SaveChangesAsync();
+
+        return ToDto(user);
+    }
+
+    public async Task<UserUpdateResult> UpdateAsync(Guid id, UpdateUserDto request)
+    {
+        var user = await _context.Users.FindAsync(id);
+
+        if (user == null)
+        {
+            return UserUpdateResult.NotFound;
+        }
+
+        var email = request.Email.Trim();
+
+        if (!string.Equals(user.Email, email, StringComparison.OrdinalIgnoreCase) &&
+            await EmailInUseAsync(email))
+        {
+            return UserUpdateResult.EmailTaken;
+        }
+
+        user.Email = email;
+
+        if (request.Role.HasValue)
+        {
+            user.Role = request.Role.Value;
+        }
+
+        await _context.SaveChangesAsync();
+
+        return UserUpdateResult.Updated;
+    }
+
+    public async Task<bool> DeleteAsync(Guid id)
+    {
+        var user = await _context.Users.FindAsync(id);
+
+        if (user == null)
+        {
+            return false;
+        }
+
+        _context.Users.Remove(user);
+        await _context.SaveChangesAsync();
+
+        return true;
+    }
+
+    private Task<bool> EmailInUseAsync(string email) =>
+        _context.Users.AnyAsync(u => u.Email == email);
+
+    private static UserDto ToDto(User user) => new()
+    {
+        Id = user.Id,
+        Name = user.Name,
+        Email = user.Email,
+        Role = user.Role,
+        CustomerAccess = user.CustomerAccess,
+        TwoFactor = user.MfaEnabled,
+        LastSignIn = user.LastSignIn,
+        Status = user.Status
+    };
 }

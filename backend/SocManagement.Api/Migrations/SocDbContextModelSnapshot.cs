@@ -251,8 +251,15 @@ namespace SocManagement.Api.Migrations
                     b.Property<DateTime?>("LockedUntil")
                         .HasColumnType("datetime2");
 
+                    b.Property<bool>("MfaConfirmed")
+                        .HasColumnType("bit");
+
                     b.Property<bool>("MfaEnabled")
                         .HasColumnType("bit");
+
+                    b.Property<string>("MfaSecret")
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -278,7 +285,7 @@ namespace SocManagement.Api.Migrations
                     b.HasIndex("Email")
                         .IsUnique();
 
-                    b.ToTable("Users", (string)null);
+                    b.ToTable("Users");
 
                     b.HasData(
                         new
@@ -288,6 +295,7 @@ namespace SocManagement.Api.Migrations
                             Email = "m.jansen@soc.nl",
                             FailedLoginAttempts = 0,
                             LastSignIn = new DateTime(2026, 10, 6, 8, 2, 0, 0, DateTimeKind.Utc),
+                            MfaConfirmed = false,
                             MfaEnabled = true,
                             Name = "M. Jansen",
                             PasswordHash = "AQAAAAIAAYagAAAAEMI61lHn1YCfav7Eeo0QX8LrYAJnScraLLCt5t44psyOYf1Vi2jrJfele0pjqcufgA==",
@@ -301,6 +309,7 @@ namespace SocManagement.Api.Migrations
                             Email = "s.bakker@soc.nl",
                             FailedLoginAttempts = 0,
                             LastSignIn = new DateTime(2026, 10, 6, 7, 58, 0, 0, DateTimeKind.Utc),
+                            MfaConfirmed = false,
                             MfaEnabled = true,
                             Name = "S. Bakker",
                             PasswordHash = "AQAAAAIAAYagAAAAEMI61lHn1YCfav7Eeo0QX8LrYAJnScraLLCt5t44psyOYf1Vi2jrJfele0pjqcufgA==",
@@ -314,6 +323,7 @@ namespace SocManagement.Api.Migrations
                             Email = "r.visser@soc.nl",
                             FailedLoginAttempts = 0,
                             LastSignIn = new DateTime(2026, 10, 6, 8, 15, 0, 0, DateTimeKind.Utc),
+                            MfaConfirmed = false,
                             MfaEnabled = true,
                             Name = "R. Visser",
                             PasswordHash = "AQAAAAIAAYagAAAAEMI61lHn1YCfav7Eeo0QX8LrYAJnScraLLCt5t44psyOYf1Vi2jrJfele0pjqcufgA==",
@@ -327,6 +337,7 @@ namespace SocManagement.Api.Migrations
                             Email = "l.smit@soc.nl",
                             FailedLoginAttempts = 0,
                             LastSignIn = new DateTime(2026, 10, 5, 17, 48, 0, 0, DateTimeKind.Utc),
+                            MfaConfirmed = false,
                             MfaEnabled = true,
                             Name = "L. Smit",
                             PasswordHash = "AQAAAAIAAYagAAAAEMI61lHn1YCfav7Eeo0QX8LrYAJnScraLLCt5t44psyOYf1Vi2jrJfele0pjqcufgA==",
@@ -340,6 +351,7 @@ namespace SocManagement.Api.Migrations
                             Email = "p.dewit@soc.nl",
                             FailedLoginAttempts = 0,
                             LastSignIn = new DateTime(2026, 10, 6, 9, 1, 0, 0, DateTimeKind.Utc),
+                            MfaConfirmed = false,
                             MfaEnabled = true,
                             Name = "P. de Wit",
                             PasswordHash = "AQAAAAIAAYagAAAAEMI61lHn1YCfav7Eeo0QX8LrYAJnScraLLCt5t44psyOYf1Vi2jrJfele0pjqcufgA==",
@@ -353,6 +365,7 @@ namespace SocManagement.Api.Migrations
                             Email = "a.mulder@soc.nl",
                             FailedLoginAttempts = 0,
                             LastSignIn = new DateTime(2026, 10, 5, 16, 12, 0, 0, DateTimeKind.Utc),
+                            MfaConfirmed = false,
                             MfaEnabled = true,
                             Name = "A. Mulder",
                             PasswordHash = "AQAAAAIAAYagAAAAEMI61lHn1YCfav7Eeo0QX8LrYAJnScraLLCt5t44psyOYf1Vi2jrJfele0pjqcufgA==",
@@ -366,6 +379,7 @@ namespace SocManagement.Api.Migrations
                             Email = "k.hendriks@soc.nl",
                             FailedLoginAttempts = 0,
                             LastSignIn = new DateTime(2026, 10, 6, 8, 30, 0, 0, DateTimeKind.Utc),
+                            MfaConfirmed = false,
                             MfaEnabled = true,
                             Name = "K. Hendriks",
                             PasswordHash = "AQAAAAIAAYagAAAAEMI61lHn1YCfav7Eeo0QX8LrYAJnScraLLCt5t44psyOYf1Vi2jrJfele0pjqcufgA==",
@@ -378,6 +392,7 @@ namespace SocManagement.Api.Migrations
                             CustomerAccess = "2 customers",
                             Email = "n.prins@soc.nl",
                             FailedLoginAttempts = 0,
+                            MfaConfirmed = false,
                             MfaEnabled = false,
                             Name = "N. Prins",
                             PasswordHash = "AQAAAAIAAYagAAAAEMI61lHn1YCfav7Eeo0QX8LrYAJnScraLLCt5t44psyOYf1Vi2jrJfele0pjqcufgA==",
