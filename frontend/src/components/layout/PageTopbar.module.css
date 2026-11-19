@@ -34,6 +34,25 @@
   }
 }
 
+.logout {
+  padding: 7px 10px;
+  border: 1px solid #bdc9d8;
+  border-radius: 5px;
+  background: #fff;
+  color: #4264e8;
+  font-size: 11px;
+  cursor: pointer;
+
+  &:hover {
+    background: #f3f6fb;
+  }
+
+  &:focus-visible {
+    outline: 2px solid #4264e8;
+    outline-offset: 2px;
+  }
+}
+
 @media (max-width: 700px) {
   .topbar {
     flex-wrap: wrap;

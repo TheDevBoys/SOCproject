@@ -4,5 +4,20 @@ namespace SocManagement.Api.Services;
 
 public interface IUserService
 {
-    List<UserDto> GetAll();
+    Task<List<UserDto>> GetAllAsync();
+
+    Task<UserDto?> GetByIdAsync(Guid id);
+
+    Task<UserDto?> CreateAsync(CreateUserDto request);
+
+    Task<UserUpdateResult> UpdateAsync(Guid id, UpdateUserDto request);
+
+    Task<bool> DeleteAsync(Guid id);
+}
+
+public enum UserUpdateResult
+{
+    Updated,
+    NotFound,
+    EmailTaken
 }
