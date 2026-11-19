@@ -1,0 +1,16 @@
+using SocManagement.Api.Enums;
+
+namespace SocManagement.Api.DTOs;
+
+public class CurrentUserDto
+{
+    public Guid Id { get; set; }
+
+    public string Name { get; set; } = string.Empty;
+
+    public string Email { get; set; } = string.Empty;
+
+    public UserRole Role { get; set; }
+
+    public bool MfaEnabled { get; set; }
+}
