@@ -77,6 +77,46 @@
   margin-top: 18px;
 }
 
+.setup {
+  margin-bottom: 18px;
+  padding: 14px;
+  border: 1px solid #d7dee8;
+  border-radius: 6px;
+  background: #f7f9fc;
+
+  & .description {
+    margin-bottom: 10px;
+  }
+}
+
+.secret {
+  display: block;
+  padding: 10px;
+  border: 1px dashed #bdc9d8;
+  border-radius: 5px;
+  background: #fff;
+  color: #202731;
+  font-size: 15px;
+  letter-spacing: 1px;
+  text-align: center;
+  word-break: break-all;
+  user-select: all;
+}
+
+.setupLink {
+  display: inline-block;
+  margin-top: 10px;
+  color: #4264e8;
+  font-size: 12px;
+}
+
+.error {
+  margin: 12px 0 0;
+  color: #c62828;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
 .note {
   margin: 20px 0 0;
   padding-top: 16px;
