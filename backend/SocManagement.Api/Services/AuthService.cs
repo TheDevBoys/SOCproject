@@ -90,6 +90,10 @@ public class AuthService : IAuthService
         {
             return null;
         }
+        if (user.Status != UserStatus.Active || IsLocked(user))
+        {
+            return null;
+        }
 
         if (user.MfaConfirmed)
         {
@@ -100,8 +104,6 @@ public class AuthService : IAuthService
 
         if (decryptedSecret == null)
         {
-            // No secret yet, or one that can no longer be decrypted: setup is not
-            // confirmed, so it is safe to start over with a fresh secret.
             decryptedSecret = _mfaService.GenerateSecret();
             user.MfaSecret = _protector.Protect(decryptedSecret);
 
@@ -161,11 +163,6 @@ public class AuthService : IAuthService
         return user is { Status: UserStatus.Active } ? user : null;
     }
 
-    /// <summary>
-    /// Returns the plain MFA secret, or null when there is none or it cannot be decrypted.
-    /// Secrets saved before encryption was introduced are stored as plain Base32; those are
-    /// accepted once and re-saved encrypted.
-    /// </summary>
     private async Task<string?> ReadMfaSecretAsync(User user)
     {
         if (string.IsNullOrEmpty(user.MfaSecret))

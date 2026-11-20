@@ -18,6 +18,7 @@ public class SocDbContext(DbContextOptions<SocDbContext> options) : DbContext(op
     public DbSet<TicketHistory> TicketHistories => Set<TicketHistory>();
     public DbSet<SLA> Slas => Set<SLA>();
     public DbSet<RetentionPolicy> RetentionPolicies => Set<RetentionPolicy>();
+    public DbSet<UserInvitation> UserInvitations => Set<UserInvitation>();
     
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -34,7 +35,7 @@ public class SocDbContext(DbContextOptions<SocDbContext> options) : DbContext(op
             entity.Property(u => u.Name)
                 .HasMaxLength(100);
 
-            // Stored encrypted via ASP.NET Core Data Protection, which is much longer than the raw secret.
+            // Stored encrypted via ASP.NET Core Data Protection is much longer than the raw secret.
             entity.Property(u => u.MfaSecret)
                 .HasMaxLength(512);
 
@@ -48,7 +49,21 @@ public class SocDbContext(DbContextOptions<SocDbContext> options) : DbContext(op
                 
             entity.HasData(SeedUsers.GetUsers());  
         });
+
+        modelBuilder.Entity<UserInvitation>(entity =>
+        {
+            entity.Property(i => i.TokenHash)
+                .HasMaxLength(64)
+                .IsRequired();
+
+            entity.HasIndex(i => i.TokenHash)
+                .IsUnique();
+
+            entity.HasOne(i => i.User)
+                .WithMany()
+                .HasForeignKey(i => i.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
     }
 
 }
-

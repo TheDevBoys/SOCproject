@@ -1,17 +1,29 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+
 import Sidebar from '../../src/components/layout/Sidebar'
 import Button from '../../src/components/ui/Button'
-import styles from './page.module.css'
 import PageTopbar from '../../src/components/layout/PageTopbar'
+
 import { getUsers } from '../../src/services/users'
+import { inviteUser } from '../../src/services/invitation'
+
 import type { User, UserRole } from '../../src/types/user'
 
+import styles from './page.module.css'
 
 type Permission = {
   name: string
   roles: boolean[]
+}
+
+type CurrentUser = {
+  id: string
+  name: string
+  email: string
+  role: UserRole
+  twoFactor: boolean
 }
 
 const permissions: Permission[] = [
@@ -47,112 +59,408 @@ const roleLabels: Record<UserRole, string> = {
   Tier3: 'Tier 3 analyst',
   Engineer: 'Engineer',
   AccountManager: 'Account manager',
-  ForensicAnalyst: 'Forensic analyst (custom)',
+  ForensicAnalyst: 'Forensic analyst',
   Customer: 'Customer',
 }
 
+const availableRoles = Object.keys(roleLabels) as UserRole[]
+
 function formatLastSignIn(lastSignIn: string | null): string {
-  if (lastSignIn === null) {
+  if (!lastSignIn) {
     return 'Never signed in'
   }
 
   return new Date(lastSignIn).toLocaleString()
 }
-export default function UsersRolesPage() {
-const [users, setUsers] = useState<User[]>([])
-const [loading, setLoading] = useState(true)
-const [error, setError] = useState<string | null>(null)
-const [collapsed, setCollapsed] = useState(false)
 
+export default function UsersRolesPage() {
+  const [users, setUsers] = useState<User[]>([])
+  const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null)
+
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [collapsed, setCollapsed] = useState(false)
+
+  const [showInviteForm, setShowInviteForm] = useState(false)
+
+  const [inviteName, setInviteName] = useState('')
+  const [inviteEmail, setInviteEmail] = useState('')
+  const [inviteRole, setInviteRole] = useState<UserRole>('Tier1')
+
+  const [inviting, setInviting] = useState(false)
+  const [inviteError, setInviteError] = useState<string | null>(null)
+  const [inviteSuccess, setInviteSuccess] = useState<string | null>(null)
+
+  // Load users and current authenticated user
   useEffect(() => {
-    getUsers()
-      .then(setUsers)
-    .catch(error => {
-      console.error('Failed to load users:', error)
-      setError('Could not load users.')
-    })
-    .finally(() => {
-      setLoading(false)
-    })
-}, [])
+    async function loadData() {
+      try {
+        const [usersResponse, currentUserResponse] = await Promise.all([
+          getUsers(),
+          fetch('/api/auth/me', {
+            credentials: 'include',
+            cache: 'no-store',
+          }),
+        ])
+
+        setUsers(usersResponse)
+
+        if (!currentUserResponse.ok) {
+          throw new Error('Could not load current user.')
+        }
+
+        const currentUserData: CurrentUser =
+          await currentUserResponse.json()
+
+        setCurrentUser(currentUserData)
+      } catch (error) {
+        console.error('Failed to load page data:', error)
+        setError('Could not load user information.')
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    loadData()
+  }, [])
+
+  function toggleInviteForm() {
+    setShowInviteForm(value => !value)
+    setInviteError(null)
+    setInviteSuccess(null)
+  }
+
+  async function handleInvite(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+
+    if (inviting) {
+      return
+    }
+
+    setInviteError(null)
+    setInviteSuccess(null)
+    setInviting(true)
+
+    const email = inviteEmail.trim()
+
+    try {
+      await inviteUser({
+        name: inviteName.trim(),
+        email,
+        role: inviteRole,
+      })
+
+      setInviteSuccess(`Invitation sent to ${email}.`)
+
+      setInviteName('')
+      setInviteEmail('')
+      setInviteRole('Tier1')
+      setShowInviteForm(false)
+
+      try {
+        const updatedUsers = await getUsers()
+        setUsers(updatedUsers)
+        setError(null)
+      } catch (refreshError) {
+        console.error('Failed to refresh users:', refreshError)
+      }
+    } catch (error) {
+      console.error('Failed to invite user:', error)
+
+      setInviteError(
+        error instanceof Error
+          ? error.message
+          : 'Could not send invitation.'
+      )
+    } finally {
+      setInviting(false)
+    }
+  }
 
   return (
-    <div className={[ styles.shell, collapsed && styles.collapsedShell,].filter(Boolean).join(' ')}>
-      <Sidebar collapsed={collapsed} onToggle={() => setCollapsed(value => !value)}/>
+    <div
+      className={[
+        styles.shell,
+        collapsed && styles.collapsedShell,
+      ]
+        .filter(Boolean)
+        .join(' ')}
+    >
+      <Sidebar
+        collapsed={collapsed}
+        onToggle={() => setCollapsed(value => !value)}
+      />
+
       <div className={styles.workspace}>
-        <PageTopbar title="Management / Users & roles" userName="K. Hendriks" userRole="Superuser" twoFactorEnabled={true} sampleData={true} />
+        <PageTopbar
+          title="Management / Users & roles"
+          userName={currentUser?.name ?? ''}
+          userRole={
+            currentUser
+              ? roleLabels[currentUser.role]
+              : ''
+          }
+          twoFactorEnabled={currentUser?.twoFactor ?? false}
+          sampleData={false}
+        />
+
         <main className={styles.main}>
           <div className={styles.pageHeader}>
             <h1>Users & roles</h1>
-            <p>Who can do what. Roles set the permissions; the link to customers decides which data someone sees.</p>
+
+            <p>
+              Who can do what. Roles set the permissions;
+              the link to customers decides which data someone sees.
+            </p>
           </div>
 
-          <section className={styles.card} aria-labelledby="users-heading">
+          {/* USERS */}
+
+          <section
+            className={styles.card}
+            aria-labelledby="users-heading"
+          >
             <div className={styles.cardHeader}>
               <div className={styles.cardTitle}>
                 <h2 id="users-heading">Users</h2>
-                <span className={styles.countBadge}>{users.length}</span>
+
+                <span className={styles.countBadge}>
+                  {users.length}
+                </span>
               </div>
-              <Button type="button">Invite user</Button>
+
+              {currentUser?.role === 'Superuser' && (
+                <Button
+                  type="button"
+                  onClick={toggleInviteForm}
+                >
+                  {showInviteForm
+                    ? 'Cancel invitation'
+                    : 'Invite user'}
+                </Button>
+              )}
             </div>
-            {loading ? (
-  <p>Loading users...</p>
-) : error ? (
-  <p role="alert">{error}</p>
-) : (
-  <div className={styles.tableWrapper}>
-              <table className={styles.table}>
-                <thead>
-                  <tr>
-                    <th>Name</th>
-                    <th>Role</th>
-                    <th>Customer access</th>
-                    <th>2FA</th>
-                    <th>Last sign-in</th>
-                    <th>Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {users.map(user => (
-                    <tr key={user.id}>
-                      <td className={styles.userName}>{user.name}</td>
-                      <td>{roleLabels[user.role]}</td>
-                      <td>{user.customerAccess}</td>
-                      <td><span className={user.twoFactor ? styles.activeBadge : styles.warningBadge}>{user.twoFactor ? 'Active' : 'Not set up'}</span></td>
-                      <td className={styles.muted}>{formatLastSignIn(user.lastSignIn)}</td>
-                      <td>{user.status}</td>
-                    </tr>
+
+            {/* SUCCESS MESSAGE */}
+
+            {inviteSuccess && (
+              <p
+                role="status"
+                style={{
+                  color: '#16803c',
+                  margin: '12px 0',
+                }}
+              >
+                {inviteSuccess}
+              </p>
+            )}
+
+            {/* INVITATION FORM */}
+
+            {showInviteForm && currentUser?.role === 'Superuser' && (
+              <form
+                onSubmit={handleInvite}
+                style={{
+                  display: 'grid',
+                  gap: 12,
+                  maxWidth: 440,
+                  margin: '16px 0 24px',
+                }}
+              >
+                <h3>Invite a new user</h3>
+
+                <label htmlFor="invite-name">
+                  Name
+                </label>
+
+                <input
+                  id="invite-name"
+                  type="text"
+                  value={inviteName}
+                  onChange={event =>
+                    setInviteName(event.target.value)
+                  }
+                  required
+                  maxLength={100}
+                  autoComplete="name"
+                  disabled={inviting}
+                  style={{ padding: 10 }}
+                />
+
+                <label htmlFor="invite-email">
+                  Email
+                </label>
+
+                <input
+                  id="invite-email"
+                  type="email"
+                  value={inviteEmail}
+                  onChange={event =>
+                    setInviteEmail(event.target.value)
+                  }
+                  required
+                  autoComplete="email"
+                  disabled={inviting}
+                  style={{ padding: 10 }}
+                />
+
+                <label htmlFor="invite-role">
+                  Role
+                </label>
+
+                <select
+                  id="invite-role"
+                  value={inviteRole}
+                  onChange={event =>
+                    setInviteRole(event.target.value as UserRole)
+                  }
+                  required
+                  disabled={inviting}
+                  style={{ padding: 10 }}
+                >
+                  {availableRoles.map(role => (
+                    <option key={role} value={role}>
+                      {roleLabels[role]}
+                    </option>
                   ))}
-                </tbody>
-              </table>
+                </select>
+
+                {inviteError && (
+                  <p
+                    role="alert"
+                    style={{ color: '#b42318' }}
+                  >
+                    {inviteError}
+                  </p>
+                )}
+
+                <Button
+                  type="submit"
+                  disabled={inviting}
+                >
+                  {inviting
+                    ? 'Sending invitation...'
+                    : 'Send invitation'}
+                </Button>
+              </form>
+            )}
+
+            {/* USERS TABLE */}
+
+            {loading ? (
+              <p>Loading users...</p>
+            ) : error ? (
+              <p role="alert">{error}</p>
+            ) : (
+              <div className={styles.tableWrapper}>
+                <table className={styles.table}>
+                  <thead>
+                    <tr>
+                      <th>Name</th>
+                      <th>Role</th>
+                      <th>Customer access</th>
+                      <th>2FA</th>
+                      <th>Last sign-in</th>
+                      <th>Status</th>
+                    </tr>
+                  </thead>
+
+                  <tbody>
+                    {users.map(user => (
+                      <tr key={user.id}>
+                        <td className={styles.userName}>
+                          {user.name}
+                        </td>
+
+                        <td>
+                          {roleLabels[user.role]}
+                        </td>
+
+                        <td>
+                          {user.customerAccess}
+                        </td>
+
+                        <td>
+                          <span
+                            className={
+                              user.twoFactor
+                                ? styles.activeBadge
+                                : styles.warningBadge
+                            }
+                          >
+                            {user.twoFactor
+                              ? 'Active'
+                              : 'Not set up'}
+                          </span>
+                        </td>
+
+                        <td className={styles.muted}>
+                          {formatLastSignIn(user.lastSignIn)}
+                        </td>
+
+                        <td>{user.status}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             )}
           </section>
-          <section className={styles.card} aria-labelledby="roles-heading">
+
+          {/* ROLES AND PERMISSIONS */}
+
+          <section
+            className={styles.card}
+            aria-labelledby="roles-heading"
+          >
             <div className={styles.cardHeader}>
               <div className={styles.cardTitle}>
-                <h2 id="roles-heading">Roles and permissions</h2>
-                <span className={styles.subtitle}>Superusers can build custom roles</span>
+                <h2 id="roles-heading">
+                  Roles and permissions
+                </h2>
+
+                <span className={styles.subtitle}>
+                  Superusers can build custom roles
+                </span>
               </div>
-              <Button type="button">New role</Button>
+
+              <Button type="button">
+                New role
+              </Button>
             </div>
+
             <div className={styles.tableWrapper}>
               <table className={styles.permissionsTable}>
                 <thead>
                   <tr>
                     <th>Permission</th>
+
                     {roles.map(role => (
-                      <th key={role}>{role}</th>
+                      <th key={role}>
+                        {role}
+                      </th>
                     ))}
                   </tr>
                 </thead>
+
                 <tbody>
                   {permissions.map(permission => (
                     <tr key={permission.name}>
                       <td>{permission.name}</td>
+
                       {permission.roles.map((allowed, index) => (
-                        <td key={`${permission.name}-${roles[index]}`}>
-                          <span className={allowed ? styles.allowed : styles.denied}>{allowed ? '✓' : '–'}</span>
+                        <td
+                          key={`${permission.name}-${roles[index]}`}
+                        >
+                          <span
+                            className={
+                              allowed
+                                ? styles.allowed
+                                : styles.denied
+                            }
+                          >
+                            {allowed ? '✓' : '–'}
+                          </span>
                         </td>
                       ))}
                     </tr>
@@ -160,9 +468,16 @@ const [collapsed, setCollapsed] = useState(false)
                 </tbody>
               </table>
             </div>
+
             <div className={styles.cardFooter}>
-              <p>Every permission only applies within customers the user has access to (see Customer access).</p>
-              <p>* Superusers see customer data only after an access request; every view is logged in the audit log.
+              <p>
+                Every permission only applies within customers
+                the user has access to (see Customer access).
+              </p>
+
+              <p>
+                * Superusers see customer data only after an
+                access request; every view is logged in the audit log.
               </p>
             </div>
           </section>
