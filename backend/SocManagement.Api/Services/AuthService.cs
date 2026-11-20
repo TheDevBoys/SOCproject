@@ -1,9 +1,11 @@
+using System.Security.Cryptography;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using SocManagement.Api.Data;
 using SocManagement.Api.DTOs;
 using SocManagement.Api.Enums;
 using SocManagement.Api.Models;
+using Microsoft.AspNetCore.DataProtection;
 
 namespace SocManagement.Api.Services;
 
@@ -15,15 +17,21 @@ public class AuthService : IAuthService
     private readonly SocDbContext _context;
     private readonly IPasswordHasher<User> _passwordHasher;
     private readonly IMfaService _mfaService;
+    private readonly IDataProtector _protector;
 
     public AuthService(
         SocDbContext context,
         IPasswordHasher<User> passwordHasher,
-        IMfaService mfaService)
+        IMfaService mfaService,
+        IDataProtectionProvider dataProtectionProvider)
     {
         _context = context;
         _passwordHasher = passwordHasher;
         _mfaService = mfaService;
+
+        _protector = dataProtectionProvider.CreateProtector(
+            "SocManagement.MfaSecrets.v1"
+        );
     }
 
     public async Task<LoginResult> LoginAsync(LoginRequestDto request)
@@ -88,17 +96,26 @@ public class AuthService : IAuthService
             return new MfaSetupResponseDto { SetupRequired = false };
         }
 
-        if (string.IsNullOrEmpty(user.MfaSecret))
+        var decryptedSecret = await ReadMfaSecretAsync(user);
+
+        if (decryptedSecret == null)
         {
-            user.MfaSecret = _mfaService.GenerateSecret();
+            // No secret yet, or one that can no longer be decrypted: setup is not
+            // confirmed, so it is safe to start over with a fresh secret.
+            decryptedSecret = _mfaService.GenerateSecret();
+            user.MfaSecret = _protector.Protect(decryptedSecret);
+
             await _context.SaveChangesAsync();
         }
 
         return new MfaSetupResponseDto
         {
             SetupRequired = true,
-            Secret = user.MfaSecret,
-            QrCodeUri = _mfaService.GenerateQrCodeUri(user.Email, user.MfaSecret)
+            Secret = decryptedSecret,
+            QrCodeUri = _mfaService.GenerateQrCodeUri(
+                user.Email,
+                decryptedSecret
+            )
         };
     }
 
@@ -114,7 +131,14 @@ public class AuthService : IAuthService
             return null;
         }
 
-        if (!_mfaService.VerifyCode(user.MfaSecret, code))
+        var decryptedSecret = await ReadMfaSecretAsync(user);
+
+        if (decryptedSecret == null)
+        {
+            return null;
+        }
+
+        if (!_mfaService.VerifyCode(decryptedSecret, code))
         {
             await RegisterFailedAttemptAsync(user);
             return null;
@@ -124,6 +148,7 @@ public class AuthService : IAuthService
         user.FailedLoginAttempts = 0;
         user.LockedUntil = null;
         user.LastSignIn = DateTime.UtcNow;
+
         await _context.SaveChangesAsync();
 
         return user;
@@ -135,6 +160,41 @@ public class AuthService : IAuthService
 
         return user is { Status: UserStatus.Active } ? user : null;
     }
+
+    /// <summary>
+    /// Returns the plain MFA secret, or null when there is none or it cannot be decrypted.
+    /// Secrets saved before encryption was introduced are stored as plain Base32; those are
+    /// accepted once and re-saved encrypted.
+    /// </summary>
+    private async Task<string?> ReadMfaSecretAsync(User user)
+    {
+        if (string.IsNullOrEmpty(user.MfaSecret))
+        {
+            return null;
+        }
+
+        try
+        {
+            return _protector.Unprotect(user.MfaSecret);
+        }
+        catch (CryptographicException)
+        {
+            if (!IsPlainBase32Secret(user.MfaSecret))
+            {
+                return null;
+            }
+
+            var legacySecret = user.MfaSecret;
+            user.MfaSecret = _protector.Protect(legacySecret);
+            await _context.SaveChangesAsync();
+
+            return legacySecret;
+        }
+    }
+
+    private static bool IsPlainBase32Secret(string value) =>
+        value.Length <= 64 &&
+        value.All(c => c is >= 'A' and <= 'Z' or >= '2' and <= '7' or '=');
 
     private static bool IsLocked(User user) =>
         user.LockedUntil.HasValue && user.LockedUntil.Value > DateTime.UtcNow;

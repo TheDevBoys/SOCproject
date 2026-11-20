@@ -1,5 +1,6 @@
 using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
 using SocManagement.Api.Auth;
 using SocManagement.Api.Models;
@@ -17,6 +18,11 @@ builder.Services.AddControllers()
     });
 
 builder.Services.AddSwaggerGen();
+// Keys live in the database so every environment/instance can decrypt the same MFA secrets
+// and they survive restarts and redeploys.
+builder.Services.AddDataProtection()
+    .SetApplicationName("SocManagement")
+    .PersistKeysToDbContext<SocDbContext>();
 builder.Services.AddDbContext<SocDbContext>(options =>
     options.UseSqlServer(
         builder.Configuration.GetConnectionString("SocDb"),

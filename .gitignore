@@ -4,6 +4,7 @@ obj/
 **/bin/
 **/obj/
 /frontend/frontend/
+AGENTS.md
 # Node
 /node_modules/
 

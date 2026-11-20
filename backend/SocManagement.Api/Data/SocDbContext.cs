@@ -1,10 +1,13 @@
+using Microsoft.AspNetCore.DataProtection.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using SocManagement.Api.Models;
 
 namespace SocManagement.Api.Data;
 
-public class SocDbContext(DbContextOptions<SocDbContext> options) : DbContext(options)
+public class SocDbContext(DbContextOptions<SocDbContext> options) : DbContext(options), IDataProtectionKeyContext
 {
+    public DbSet<DataProtectionKey> DataProtectionKeys => Set<DataProtectionKey>();
+
     public DbSet<User> Users => Set<User>();
 
     public DbSet<Ticket> Tickets => Set<Ticket>();
@@ -31,8 +34,9 @@ public class SocDbContext(DbContextOptions<SocDbContext> options) : DbContext(op
             entity.Property(u => u.Name)
                 .HasMaxLength(100);
 
+            // Stored encrypted via ASP.NET Core Data Protection, which is much longer than the raw secret.
             entity.Property(u => u.MfaSecret)
-                .HasMaxLength(64);
+                .HasMaxLength(512);
 
             entity.Property(u => u.Role)
                 .HasConversion<string>()
