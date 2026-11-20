@@ -16,7 +16,9 @@ builder.Services.AddControllers()
 builder.Services.AddSwaggerGen();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddDbContext<SocDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("SocDb")));
+    options.UseSqlServer(builder.Configuration.GetConnectionString("SocDb"),
+        sqlOptions => sqlOptions.EnableRetryOnFailure()));
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("Frontend", policy =>
