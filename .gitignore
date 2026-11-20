@@ -3,7 +3,7 @@ bin/
 obj/
 **/bin/
 **/obj/
-
+/frontend/frontend/
 # Node
 /node_modules/
 
@@ -12,3 +12,7 @@ obj/
 .idea/
 .DS_Store
 *.user
+
+#Azure CLI
+deploy.zip
+publish/
