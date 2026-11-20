@@ -68,10 +68,7 @@ export default function LoginForm() {
         <Button variant="primary" className={styles.submit} type="submit" loading={loading}>
           {loading ? 'Signing in…' : 'Sign in'}
         </Button>
-        <button className={styles.register} type="button">
-          No account? Register
-        </button>
-        <button className={styles.forgot} type="button">
+        <button className={styles.forgot} type="button" onClick={() => setError('Contact your administrator if you want to reset your password.')}>
           Forgot your password?
         </button>
       </form>
