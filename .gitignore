@@ -3,12 +3,20 @@ bin/
 obj/
 **/bin/
 **/obj/
-
+/frontend/frontend/
+AGENTS.md
+.next/
 # Node
-/node_modules/
+node_modules/
 
 # IDE / OS
 .vs/
 .idea/
 .DS_Store
 *.user
+
+#Azure CLI
+deploy.zip
+publish/
+
+**/.env.local

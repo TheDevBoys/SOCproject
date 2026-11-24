@@ -3,6 +3,7 @@ import type { CurrentUser, LoginRequest, LoginResponse, MfaSetup } from '../type
 export async function login(request: LoginRequest): Promise<LoginResponse> {
   const response = await fetch('/api/auth/login', {
     method: 'POST',
+    credentials: 'include',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(request),
   })
@@ -19,7 +20,8 @@ export async function login(request: LoginRequest): Promise<LoginResponse> {
 }
 
 export async function getMfaSetup(): Promise<MfaSetup | null> {
-  const response = await fetch('/api/auth/mfa/setup')
+  const response = await fetch('/api/auth/mfa/setup', {
+    credentials: 'include',})
 
   if (response.status === 401) {
     return null
@@ -35,6 +37,7 @@ export async function getMfaSetup(): Promise<MfaSetup | null> {
 export async function verifyMfa(code: string): Promise<boolean> {
   const response = await fetch('/api/auth/mfa/verify', {
     method: 'POST',
+    credentials: 'include',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ code }),
   })
@@ -51,7 +54,8 @@ export async function verifyMfa(code: string): Promise<boolean> {
 }
 
 export async function getCurrentUser(): Promise<CurrentUser | null> {
-  const response = await fetch('/api/auth/me')
+  const response = await fetch('/api/auth/me', {
+    credentials: 'include',})
 
   if (response.status === 401) {
     return null
@@ -65,5 +69,8 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
 }
 
 export async function logout(): Promise<void> {
-  await fetch('/api/auth/logout', { method: 'POST' })
+  await fetch('/api/auth/logout', { 
+    method: 'POST',
+    credentials: 'include'
+  })
 }
