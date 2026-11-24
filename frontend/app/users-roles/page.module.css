@@ -1,4 +1,3 @@
-
 .shell {
   display: grid;
   grid-template-columns: 232px minmax(0, 1fr);
@@ -27,7 +26,6 @@
   }
 }
 
-
 .main {
   display: flex;
   flex-direction: column;
@@ -51,7 +49,6 @@
     line-height: 1.5;
   }
 }
-
 
 .card {
   width: 100%;
@@ -105,7 +102,6 @@
   color: #647184;
   font-size: 12px;
 }
-
 
 .tableWrapper {
   width: 100%;
@@ -172,7 +168,6 @@
   color: #92400e;
 }
 
-
 .permissionsTable {
   table-layout: fixed;
 
@@ -203,9 +198,7 @@
   font-size: 15px;
 }
 
-/* =========================
-   Card footer
-========================= */
+/* CARD FOOTER */
 
 .cardFooter {
   display: flex;
@@ -221,6 +214,202 @@
     line-height: 1.5;
   }
 }
+
+/* INVITE USER MODAL */
+
+.modalBackdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 20px;
+  background: rgb(32 39 49 / 55%);
+}
+
+.inviteModal {
+  width: min(100%, 480px);
+  max-height: calc(100svh - 40px);
+  overflow-y: auto;
+
+  border: 1px solid #d7dee8;
+  border-radius: 8px;
+
+  background: #fff;
+
+  box-shadow: 0 20px 60px rgb(32 39 49 / 18%);
+}
+
+.inviteModalHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+
+  padding: 20px 24px;
+  border-bottom: 1px solid #dce2eb;
+}
+
+.inviteModalTitle {
+  margin: 0 0 6px;
+  color: #202731;
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.inviteModalDescription {
+  margin: 0;
+  color: #647184;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.inviteCloseButton {
+  flex-shrink: 0;
+
+  display: grid;
+  place-items: center;
+
+  width: 30px;
+  height: 30px;
+
+  border: 1px solid #d7dee8;
+  border-radius: 5px;
+
+  background: #fff;
+  color: #647184;
+
+  font-size: 20px;
+  cursor: pointer;
+}
+
+.inviteCloseButton:hover {
+  background: #f8fafc;
+  color: #202731;
+}
+
+.inviteCloseButton:focus-visible {
+  outline: 2px solid #647184;
+  outline-offset: 2px;
+}
+
+.inviteForm {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+
+  padding: 24px;
+}
+
+.inviteField {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.inviteLabel {
+  color: #202731;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.inviteInput {
+  width: 100%;
+  min-height: 40px;
+
+  padding: 10px 12px;
+
+  border: 1px solid #bdc9d8;
+  border-radius: 5px;
+
+  background: #fff;
+  color: #202731;
+
+  font: inherit;
+  font-size: 13px;
+}
+
+.inviteInput:focus {
+  outline: 2px solid #94a3b8;
+  outline-offset: 1px;
+}
+
+.inviteInput:disabled {
+  background: #f8fafc;
+  cursor: not-allowed;
+}
+
+.inviteHint {
+  margin: 0;
+  color: #647184;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.inviteError {
+  margin: 0;
+  padding: 10px 12px;
+
+  border-radius: 5px;
+
+  background: #fef2f2;
+  color: #b42318;
+
+  font-size: 12px;
+}
+
+.inviteSuccess {
+  margin: 12px 16px;
+  padding: 10px 12px;
+
+  border-radius: 5px;
+
+  background: #dcfce7;
+  color: #15803d;
+
+  font-size: 12px;
+}
+
+.inviteActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+
+  margin-top: 4px;
+  padding-top: 18px;
+
+  border-top: 1px solid #e8edf3;
+}
+
+.inviteCancelButton {
+  padding: 10px 16px;
+
+  border: 1px solid #bdc9d8;
+  border-radius: 5px;
+
+  background: #fff;
+  color: #202731;
+
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+
+  cursor: pointer;
+}
+
+.inviteCancelButton:hover {
+  background: #f8fafc;
+}
+
+.inviteCancelButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* RESPONSIVE */
 
 @media (max-width: 1100px) {
   .permissionsTable {
@@ -258,5 +447,18 @@
   .cardHeader {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .modalBackdrop {
+    padding: 12px;
+  }
+
+  .inviteModal {
+    max-height: calc(100svh - 24px);
+  }
+
+  .inviteModalHeader,
+  .inviteForm {
+    padding: 16px;
   }
 }

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, type FormEvent } from 'react'
 
 import Sidebar from '../../src/components/layout/Sidebar'
 import Button from '../../src/components/ui/Button'
@@ -82,7 +82,6 @@ export default function UsersRolesPage() {
   const [collapsed, setCollapsed] = useState(false)
 
   const [showInviteForm, setShowInviteForm] = useState(false)
-
   const [inviteName, setInviteName] = useState('')
   const [inviteEmail, setInviteEmail] = useState('')
   const [inviteRole, setInviteRole] = useState<UserRole>('Tier1')
@@ -91,7 +90,6 @@ export default function UsersRolesPage() {
   const [inviteError, setInviteError] = useState<string | null>(null)
   const [inviteSuccess, setInviteSuccess] = useState<string | null>(null)
 
-  // Load users and current authenticated user
   useEffect(() => {
     async function loadData() {
       try {
@@ -124,18 +122,39 @@ export default function UsersRolesPage() {
     loadData()
   }, [])
 
+  function closeInviteForm() {
+    if (inviting) return
+
+    setShowInviteForm(false)
+    setInviteError(null)
+  }
+
   function toggleInviteForm() {
     setShowInviteForm(value => !value)
     setInviteError(null)
-    setInviteSuccess(null)
   }
 
-  async function handleInvite(event: React.FormEvent<HTMLFormElement>) {
+  useEffect(() => {
+    if (!showInviteForm) return
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === 'Escape' && !inviting) {
+        setShowInviteForm(false)
+        setInviteError(null)
+      }
+    }
+
+    document.addEventListener('keydown', handleKeyDown)
+
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [showInviteForm, inviting])
+
+  async function handleInvite(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
 
-    if (inviting) {
-      return
-    }
+    if (inviting) return
 
     setInviteError(null)
     setInviteSuccess(null)
@@ -150,7 +169,7 @@ export default function UsersRolesPage() {
         role: inviteRole,
       })
 
-      setInviteSuccess(`Invitation sent to ${email}.`)
+      setInviteSuccess(`Invitation successfully sent to ${email}.`)
 
       setInviteName('')
       setInviteEmail('')
@@ -234,9 +253,7 @@ export default function UsersRolesPage() {
                   type="button"
                   onClick={toggleInviteForm}
                 >
-                  {showInviteForm
-                    ? 'Cancel invitation'
-                    : 'Invite user'}
+                  Invite user
                 </Button>
               )}
             </div>
@@ -246,103 +263,10 @@ export default function UsersRolesPage() {
             {inviteSuccess && (
               <p
                 role="status"
-                style={{
-                  color: '#16803c',
-                  margin: '12px 0',
-                }}
+                className={styles.inviteSuccess}
               >
                 {inviteSuccess}
               </p>
-            )}
-
-            {/* INVITATION FORM */}
-
-            {showInviteForm && currentUser?.role === 'Superuser' && (
-              <form
-                onSubmit={handleInvite}
-                style={{
-                  display: 'grid',
-                  gap: 12,
-                  maxWidth: 440,
-                  margin: '16px 0 24px',
-                }}
-              >
-                <h3>Invite a new user</h3>
-
-                <label htmlFor="invite-name">
-                  Name
-                </label>
-
-                <input
-                  id="invite-name"
-                  type="text"
-                  value={inviteName}
-                  onChange={event =>
-                    setInviteName(event.target.value)
-                  }
-                  required
-                  maxLength={100}
-                  autoComplete="name"
-                  disabled={inviting}
-                  style={{ padding: 10 }}
-                />
-
-                <label htmlFor="invite-email">
-                  Email
-                </label>
-
-                <input
-                  id="invite-email"
-                  type="email"
-                  value={inviteEmail}
-                  onChange={event =>
-                    setInviteEmail(event.target.value)
-                  }
-                  required
-                  autoComplete="email"
-                  disabled={inviting}
-                  style={{ padding: 10 }}
-                />
-
-                <label htmlFor="invite-role">
-                  Role
-                </label>
-
-                <select
-                  id="invite-role"
-                  value={inviteRole}
-                  onChange={event =>
-                    setInviteRole(event.target.value as UserRole)
-                  }
-                  required
-                  disabled={inviting}
-                  style={{ padding: 10 }}
-                >
-                  {availableRoles.map(role => (
-                    <option key={role} value={role}>
-                      {roleLabels[role]}
-                    </option>
-                  ))}
-                </select>
-
-                {inviteError && (
-                  <p
-                    role="alert"
-                    style={{ color: '#b42318' }}
-                  >
-                    {inviteError}
-                  </p>
-                )}
-
-                <Button
-                  type="submit"
-                  disabled={inviting}
-                >
-                  {inviting
-                    ? 'Sending invitation...'
-                    : 'Send invitation'}
-                </Button>
-              </form>
             )}
 
             {/* USERS TABLE */}
@@ -483,6 +407,186 @@ export default function UsersRolesPage() {
           </section>
         </main>
       </div>
+
+      {/* INVITE USER MODAL */}
+
+      {showInviteForm && currentUser?.role === 'Superuser' && (
+        <div
+          className={styles.modalBackdrop}
+          onMouseDown={event => {
+            if (event.target === event.currentTarget) {
+              closeInviteForm()
+            }
+          }}
+        >
+          <section
+            className={styles.inviteModal}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="invite-modal-title"
+            aria-describedby="invite-modal-description"
+          >
+            {/* MODAL HEADER */}
+
+            <div className={styles.inviteModalHeader}>
+              <div>
+                <h2
+                  id="invite-modal-title"
+                  className={styles.inviteModalTitle}
+                >
+                  Invite a new user
+                </h2>
+
+                <p
+                  id="invite-modal-description"
+                  className={styles.inviteModalDescription}
+                >
+                  Send an invitation to create an account
+                  in the SOC management system.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                className={styles.inviteCloseButton}
+                aria-label="Close invitation"
+                disabled={inviting}
+                onClick={closeInviteForm}
+              >
+                ×
+              </button>
+            </div>
+
+            {/* INVITATION FORM */}
+
+            <form
+              onSubmit={handleInvite}
+              className={styles.inviteForm}
+            >
+              {/* FULL NAME */}
+
+              <div className={styles.inviteField}>
+                <label
+                  htmlFor="invite-name"
+                  className={styles.inviteLabel}
+                >
+                  Full name
+                </label>
+
+                <input
+                  id="invite-name"
+                  className={styles.inviteInput}
+                  type="text"
+                  value={inviteName}
+                  onChange={event =>
+                    setInviteName(event.target.value)
+                  }
+                  required
+                  maxLength={100}
+                  autoComplete="name"
+                  disabled={inviting}
+                  placeholder="Enter full name"
+                  autoFocus
+                />
+              </div>
+
+              {/* EMAIL */}
+
+              <div className={styles.inviteField}>
+                <label
+                  htmlFor="invite-email"
+                  className={styles.inviteLabel}
+                >
+                  Email address
+                </label>
+
+                <input
+                  id="invite-email"
+                  className={styles.inviteInput}
+                  type="email"
+                  value={inviteEmail}
+                  onChange={event =>
+                    setInviteEmail(event.target.value)
+                  }
+                  required
+                  autoComplete="email"
+                  disabled={inviting}
+                  placeholder="name@company.com"
+                />
+
+                <p className={styles.inviteHint}>
+                  An invitation link will be sent to this address.
+                </p>
+              </div>
+
+              {/* ROLE */}
+
+              <div className={styles.inviteField}>
+                <label
+                  htmlFor="invite-role"
+                  className={styles.inviteLabel}
+                >
+                  User role
+                </label>
+
+                <select
+                  id="invite-role"
+                  className={styles.inviteInput}
+                  value={inviteRole}
+                  onChange={event =>
+                    setInviteRole(event.target.value as UserRole)
+                  }
+                  required
+                  disabled={inviting}
+                >
+                  {availableRoles.map(role => (
+                    <option key={role} value={role}>
+                      {roleLabels[role]}
+                    </option>
+                  ))}
+                </select>
+
+                <p className={styles.inviteHint}>
+                  This role determines the user's permissions.
+                </p>
+              </div>
+
+              {/* ERROR MESSAGE */}
+
+              {inviteError && (
+                <p
+                  role="alert"
+                  className={styles.inviteError}
+                >
+                  {inviteError}
+                </p>
+              )}
+
+              {/* ACTION BUTTONS */}
+
+              <div className={styles.inviteActions}>
+                <button
+                  type="button"
+                  className={styles.inviteCancelButton}
+                  disabled={inviting}
+                  onClick={closeInviteForm}
+                >
+                  Cancel
+                </button>
+
+                <Button
+                  type="submit"
+                  disabled={inviting}
+                >
+                  {inviting
+                    ? 'Sending invitation...'
+                    : 'Send invitation'}
+                </Button>
+              </div>
+            </form>
+          </section>
+        </div>
+      )}
     </div>
   )
 }

@@ -5,7 +5,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import { getCurrentUser, logout as logoutRequest } from '../../services/auth'
 import type { CurrentUser } from '../../types/auth'
 
-const PUBLIC_PATHS = ['/', '/login', '/login/2fa', '/login/2fa-setup']
+const PUBLIC_PATHS = ['/', '/login', '/login/2fa', '/login/2fa-setup', '/invite/accept']
 
 type AuthContextValue = {
   user: CurrentUser | null

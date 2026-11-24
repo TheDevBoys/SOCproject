@@ -54,10 +54,17 @@ public class InvitationsController : ControllerBase
                 message = ex.Message
             });
         }
-        catch (InvalidOperationException ex)
-            when (ex.Message == "A user with this email already exists.")
+        catch (UserAlreadyExistsException ex)
         {
             return Conflict(new
+            {
+                message = ex.Message
+            });
+        }
+        catch (EmailDeliveryException ex)
+        {
+            // The mail provider failed; the service already removed the user again.
+            return StatusCode(StatusCodes.Status502BadGateway, new
             {
                 message = ex.Message
             });
@@ -119,15 +126,11 @@ public class InvitationsController : ControllerBase
                 message = ex.Message
             });
         }
-        catch (InvalidOperationException ex)
-            when (
-                ex.Message == "The invitation is invalid, expired or already used." ||
-                ex.Message == "The invitation has already been used or has expired."
-            )
+        catch (InvitationInvalidException ex)
         {
             return BadRequest(new
             {
-                message = "The invitation is invalid, expired or already used."
+                message = ex.Message
             });
         }
     }

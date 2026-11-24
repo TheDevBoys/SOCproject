@@ -29,6 +29,19 @@ public class EmailService : IEmailService
         string name,
         string invitationUrl)
     {
+        // Local development without a Resend key: log the link instead of failing,
+        // so the invite flow can be tested without sending real emails.
+        if (_environment.IsDevelopment() &&
+            string.IsNullOrWhiteSpace(_configuration["Resend:ApiKey"]))
+        {
+            _logger.LogWarning(
+                "Resend:ApiKey is not set (Development). Invitation for {Email}: {InvitationUrl}",
+                email,
+                invitationUrl
+            );
+            return;
+        }
+
         var templatePath = Path.Combine(
             _environment.ContentRootPath,
             "EmailTemplates",
