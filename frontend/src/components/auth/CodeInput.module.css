@@ -1,0 +1,33 @@
+.digits {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.digit {
+  width: 100%;
+  min-width: 0;
+  height: 56px;
+  padding: 4px;
+  border: 1px solid #bdc9d8;
+  border-radius: 6px;
+  background: #fff;
+  color: #202731;
+  font-size: 24px;
+  text-align: center;
+
+  &:focus-visible {
+    outline: 2px solid #4264e8;
+    outline-offset: 3px;
+  }
+}
+
+@media (max-width: 400px) {
+  .digits {
+    gap: 8px;
+  }
+
+  .digit {
+    height: 48px;
+  }
+}

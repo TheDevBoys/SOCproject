@@ -3,7 +3,7 @@ import styles from './TextField.module.css'
 
 type TextFieldProps = InputHTMLAttributes<HTMLInputElement> & {
   id: string
-  label: string
+  label?: string
   error?: string
   containerClassName?: string
 }
@@ -19,7 +19,7 @@ export default function TextField({
 }: TextFieldProps) {
   return (
     <div className={[styles.field, containerClassName].filter(Boolean).join(' ')}>
-      <label className={styles.label} htmlFor={id}>{label}</label>
+      {label && (<label className={styles.label} htmlFor={id}>{label}</label>)}
       <input
         {...props}
         id={id}
