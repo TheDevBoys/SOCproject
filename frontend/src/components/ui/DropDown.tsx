@@ -2,32 +2,50 @@ import type { SelectHTMLAttributes } from 'react'
 import styles from './DropDown.module.css'
 
 type DropDownProps = SelectHTMLAttributes<HTMLSelectElement> & {
+  id?: string
+  label?: string
+  error?: string
+  containerClassName?: string
   fullWidth?: boolean
   loading?: boolean
 }
 
 export default function DropDown({
+  id,
+  label,
   className,
+  containerClassName,
+  error,
   fullWidth = false,
   loading = false,
   disabled,
   children,
   ...props
 }: DropDownProps) {
+  const errorId = error && id ? `${id}-error` : undefined
+
   return (
-    <select
-      {...props}
-      className={[
-        styles.dropDown,
-        fullWidth && styles.fullWidth,
-        className
-      ]
-        .filter(Boolean)
-        .join(' ')}
-      disabled={disabled || loading}
-      aria-busy={loading || props['aria-busy']}
-    >
-      {children}
-    </select>
+    <div className={[styles.field, containerClassName].filter(Boolean).join(' ')}>
+      {label && (<label className={styles.label} htmlFor={id}>{label}</label>)}
+      <select
+        {...props}
+        id={id}
+        disabled={disabled || loading}
+        className={[styles.dropDown, fullWidth && styles.fullWidth, className].filter(Boolean).join(' ')}
+        aria-invalid={error ? true : props['aria-invalid']}
+        aria-describedby={
+          [props['aria-describedby'], errorId]
+            .filter(Boolean)
+            .join(' ') || undefined
+        }
+      >
+        {children}
+      </select>
+      {error && (
+        <span id={errorId} className={styles.error} role="alert">
+          {error}
+        </span>
+      )}
+    </div>
   )
 }

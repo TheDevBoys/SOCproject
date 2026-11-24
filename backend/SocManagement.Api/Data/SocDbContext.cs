@@ -31,6 +31,9 @@ public class SocDbContext(DbContextOptions<SocDbContext> options) : DbContext(op
             entity.Property(u => u.Name)
                 .HasMaxLength(100);
 
+            entity.Property(u => u.MfaSecret)
+                .HasMaxLength(64);
+
             entity.Property(u => u.Role)
                 .HasConversion<string>()
                 .HasMaxLength(20);
