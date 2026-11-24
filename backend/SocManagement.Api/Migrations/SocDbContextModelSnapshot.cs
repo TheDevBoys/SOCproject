@@ -147,6 +147,24 @@ namespace SocManagement.Api.Migrations
                     b.ToTable("Slas");
                 });
 
+            modelBuilder.Entity("SocManagement.Api.Models.TenantAccess", b =>
+                {
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("CustomerId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("GrantedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("UserId", "CustomerId");
+
+                    b.HasIndex("CustomerId");
+
+                    b.ToTable("TenantAccesses");
+                });
+
             modelBuilder.Entity("SocManagement.Api.Models.Ticket", b =>
                 {
                     b.Property<int>("Id")
@@ -448,6 +466,25 @@ namespace SocManagement.Api.Migrations
                     b.Navigation("Ticket");
                 });
 
+            modelBuilder.Entity("SocManagement.Api.Models.TenantAccess", b =>
+                {
+                    b.HasOne("SocManagement.Api.Models.Customer", "Customer")
+                        .WithMany("TenantAccesses")
+                        .HasForeignKey("CustomerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("SocManagement.Api.Models.User", "User")
+                        .WithMany("TenantAccesses")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Customer");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("SocManagement.Api.Models.Ticket", b =>
                 {
                     b.HasOne("SocManagement.Api.Models.User", "AssignedUser")
@@ -494,6 +531,8 @@ namespace SocManagement.Api.Migrations
                 {
                     b.Navigation("Alerts");
 
+                    b.Navigation("TenantAccesses");
+
                     b.Navigation("Tickets");
                 });
 
@@ -511,6 +550,11 @@ namespace SocManagement.Api.Migrations
                     b.Navigation("History");
 
                     b.Navigation("Sla");
+                });
+
+            modelBuilder.Entity("SocManagement.Api.Models.User", b =>
+                {
+                    b.Navigation("TenantAccesses");
                 });
 #pragma warning restore 612, 618
         }

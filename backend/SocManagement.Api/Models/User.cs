@@ -29,4 +29,7 @@ public class User
     public UserStatus Status { get; set; }
 
     public string CustomerAccess { get; set; } = string.Empty;
+
+    // Klanten waartoe deze gebruiker toegang heeft (KlantToegang).
+    public List<TenantAccess> TenantAccesses { get; set; } = new();
 }

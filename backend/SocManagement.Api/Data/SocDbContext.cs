@@ -15,6 +15,7 @@ public class SocDbContext(DbContextOptions<SocDbContext> options) : DbContext(op
     public DbSet<TicketHistory> TicketHistories => Set<TicketHistory>();
     public DbSet<SLA> Slas => Set<SLA>();
     public DbSet<RetentionPolicy> RetentionPolicies => Set<RetentionPolicy>();
+    public DbSet<TenantAccess> TenantAccesses => Set<TenantAccess>();
     
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -43,6 +44,19 @@ public class SocDbContext(DbContextOptions<SocDbContext> options) : DbContext(op
                 .HasMaxLength(20);
                 
             entity.HasData(SeedUsers.GetUsers());  
+        });
+
+        modelBuilder.Entity<TenantAccess>(entity =>
+        {
+            entity.HasKey(t => new { t.UserId, t.CustomerId });
+
+            entity.HasOne(t => t.User)
+                .WithMany(u => u.TenantAccesses)
+                .HasForeignKey(t => t.UserId);
+
+            entity.HasOne(t => t.Customer)
+                .WithMany(c => c.TenantAccesses)
+                .HasForeignKey(t => t.CustomerId);
         });
     }
 
