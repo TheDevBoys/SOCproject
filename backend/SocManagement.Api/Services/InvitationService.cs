@@ -76,14 +76,12 @@ public class InvitationService : IInvitationService
             );
         }
 
-        // Generate a secure random invitation token.
         var token = Convert.ToHexString(
             RandomNumberGenerator.GetBytes(32)
         );
 
         var now = DateTime.UtcNow;
 
-        // Create the invited user.
         var user = new User
         {
             Id = Guid.NewGuid(),
@@ -95,7 +93,6 @@ public class InvitationService : IInvitationService
             PasswordHash = string.Empty
         };
 
-        // Store only the token hash in the database.
         var invitation = new UserInvitation
         {
             Id = Guid.NewGuid(),
@@ -111,13 +108,9 @@ public class InvitationService : IInvitationService
 
         await _context.SaveChangesAsync();
 
-        // Generate the invitation link.
         var invitationUrl =
             $"{frontendBaseUrl}/invite/accept?token={Uri.EscapeDataString(token)}";
 
-        // Send the invitation email using Resend. If that fails, remove the user
-        // again: otherwise an "Invited" user without a usable invitation stays
-        // behind and every new attempt fails with "user already exists".
         try
         {
             await _emailService.SendInvitationEmailAsync(
@@ -130,7 +123,8 @@ public class InvitationService : IInvitationService
         {
             _logger.LogError(ex, "Sending the invitation email failed; rolling back the invited user.");
 
-            _context.Users.Remove(user); // cascades to the invitation
+            _context.Users.Remove(user);
+
             await _context.SaveChangesAsync();
 
             throw new EmailDeliveryException(ex);
@@ -181,14 +175,10 @@ public class InvitationService : IInvitationService
 
         var tokenHash = HashToken(request.Token);
 
-        // EnableRetryOnFailure (Program.cs) does not allow a manually started
-        // transaction on its own: the whole unit of work has to run inside the
-        // execution strategy so it can be retried as one piece.
         var strategy = _context.Database.CreateExecutionStrategy();
 
         await strategy.ExecuteAsync(async () =>
         {
-            // A retry starts from a clean slate.
             _context.ChangeTracker.Clear();
 
             var now = DateTime.UtcNow;
@@ -196,12 +186,10 @@ public class InvitationService : IInvitationService
             await using var transaction =
                 await _context.Database.BeginTransactionAsync();
 
-            // Find the invitation and its associated user.
             var invitation = await _context.UserInvitations
                 .Include(i => i.User)
                 .FirstOrDefaultAsync(i => i.TokenHash == tokenHash);
 
-            // Validate the invitation again before accepting it.
             if (invitation == null ||
                 invitation.AcceptedAt != null ||
                 invitation.ExpiresAt <= now ||
@@ -210,8 +198,6 @@ public class InvitationService : IInvitationService
                 throw new InvitationInvalidException();
             }
 
-            // Atomically claim the invitation token.
-            // Only one concurrent request can successfully claim it.
             var claimed = await _context.UserInvitations
                 .Where(i =>
                     i.Id == invitation.Id &&
@@ -227,14 +213,12 @@ public class InvitationService : IInvitationService
                 throw new InvitationInvalidException();
             }
 
-            // Hash the password chosen by the user.
             invitation.User.PasswordHash =
                 _passwordHasher.HashPassword(
                     invitation.User,
                     request.Password
                 );
 
-            // Activate the account.
             invitation.User.Status = UserStatus.Active;
 
             await _context.SaveChangesAsync();

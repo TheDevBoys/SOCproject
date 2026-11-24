@@ -29,18 +29,7 @@ public class EmailService : IEmailService
         string name,
         string invitationUrl)
     {
-        // Local development without a Resend key: log the link instead of failing,
-        // so the invite flow can be tested without sending real emails.
-        if (_environment.IsDevelopment() &&
-            string.IsNullOrWhiteSpace(_configuration["Resend:ApiKey"]))
-        {
-            _logger.LogWarning(
-                "Resend:ApiKey is not set (Development). Invitation for {Email}: {InvitationUrl}",
-                email,
-                invitationUrl
-            );
-            return;
-        }
+
 
         var templatePath = Path.Combine(
             _environment.ContentRootPath,
@@ -69,19 +58,6 @@ public class EmailService : IEmailService
         var apiKey = _configuration["Resend:ApiKey"];
         var fromEmail = _configuration["Resend:FromEmail"];
 
-        if (string.IsNullOrWhiteSpace(apiKey))
-        {
-            throw new InvalidOperationException(
-                "Resend API key is not configured."
-            );
-        }
-
-        if (string.IsNullOrWhiteSpace(fromEmail))
-        {
-            throw new InvalidOperationException(
-                "Resend sender email is not configured."
-            );
-        }
 
         var payload = new
         {

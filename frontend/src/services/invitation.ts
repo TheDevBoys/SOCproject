@@ -18,7 +18,6 @@ async function parseResponse<T>(response: Response): Promise<T> {
   return data as T;
 }
 
-// Gebruiker uitnodigen (alleen Superuser)
 export async function inviteUser(
   request: InviteUserRequest
 ): Promise<InviteUserResponse> {
@@ -34,7 +33,6 @@ export async function inviteUser(
   return parseResponse<InviteUserResponse>(response);
 }
 
-// Uitnodiging controleren
 export async function validateInvitation(
   token: string
 ): Promise<ValidateInvitationResponse> {
@@ -50,7 +48,7 @@ export async function validateInvitation(
   return parseResponse<ValidateInvitationResponse>(response);
 }
 
-// Uitnodiging accepteren en wachtwoord instellen
+
 export async function acceptInvitation(
   request: AcceptInvitationRequest
 ): Promise<AcceptInvitationResponse> {

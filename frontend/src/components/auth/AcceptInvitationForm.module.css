@@ -1,5 +1,4 @@
-/* Only what is specific to accepting an invitation. The card and the error
-   text come from AuthCard and FormError. */
+
 
 .fields {
   display: grid;

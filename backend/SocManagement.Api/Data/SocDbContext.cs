@@ -35,7 +35,6 @@ public class SocDbContext(DbContextOptions<SocDbContext> options) : DbContext(op
             entity.Property(u => u.Name)
                 .HasMaxLength(100);
 
-            // Stored encrypted via ASP.NET Core Data Protection is much longer than the raw secret.
             entity.Property(u => u.MfaSecret)
                 .HasMaxLength(512);
 

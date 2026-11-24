@@ -18,8 +18,7 @@ builder.Services.AddControllers()
     });
 
 builder.Services.AddSwaggerGen();
-// Keys live in the database so every environment/instance can decrypt the same MFA secrets
-// and they survive restarts and redeploys.
+
 builder.Services.AddDataProtection()
     .SetApplicationName("SocManagement")
     .PersistKeysToDbContext<SocDbContext>();

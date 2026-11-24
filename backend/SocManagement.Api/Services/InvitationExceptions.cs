@@ -1,7 +1,5 @@
 namespace SocManagement.Api.Services;
 
-// Dedicated exception types so the controller can map each case to the right HTTP
-// status without comparing exception messages (which breaks as soon as a text changes).
 
 public class UserAlreadyExistsException()
     : Exception("A user with this email already exists.");
