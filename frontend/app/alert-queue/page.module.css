@@ -1,0 +1,372 @@
+/* =========================
+   Page shell (same as other pages)
+========================= */
+
+.shell {
+  display: grid;
+  grid-template-columns: 232px minmax(0, 1fr);
+  min-height: 100svh;
+  background: #f4f6fa;
+}
+
+.collapsedShell {
+  grid-template-columns: 64px minmax(0, 1fr);
+}
+
+.workspace {
+  min-width: 0;
+}
+
+.main {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-width: 0;
+  padding: 24px 24px 48px;
+}
+
+.mono {
+  font-family: Consolas, 'Courier New', monospace;
+}
+
+/* =========================
+   Alert header
+========================= */
+
+.alertHeader {
+  padding: 20px;
+  border: 1px solid #d7dee8;
+  border-radius: 8px;
+  background: #fff;
+
+  & h1 {
+    margin: 4px 0 20px;
+    color: #202731;
+    font-size: 22px;
+  }
+}
+
+.alertHeaderTop {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.alertMeta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding-top: 14px;
+  color: #647184;
+  font-size: 12px;
+}
+
+.sla {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  flex-shrink: 0;
+
+  & span {
+    color: #647184;
+    font-size: 10px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  & strong {
+    color: #b8471a;
+    font-family: Consolas, 'Courier New', monospace;
+    font-size: 24px;
+    letter-spacing: 1px;
+  }
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+/* =========================
+   Two-column layout
+========================= */
+
+.columns {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 340px;
+  align-items: start;
+  gap: 20px;
+}
+
+.column {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-width: 0;
+}
+
+/* Cards with a button in the header: push the button to the right */
+.cardWithAction header {
+  min-height: 58px;
+}
+
+.headerButton {
+  min-height: 30px;
+  margin-left: auto;
+  padding: 6px 12px;
+  font-size: 12px;
+}
+
+/* =========================
+   Detail lists (Summary, Properties)
+========================= */
+
+.details {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+  font-size: 13px;
+
+  & div {
+    display: grid;
+    grid-template-columns: 110px minmax(0, 1fr);
+    gap: 12px;
+  }
+
+  & dt {
+    color: #647184;
+  }
+
+  & dd {
+    margin: 0;
+    color: #202731;
+    overflow-wrap: anywhere;
+  }
+}
+
+/* =========================
+   Observables table
+========================= */
+
+.tableScroll {
+  overflow-x: auto;
+
+  &:focus-visible {
+    outline: 2px solid #4264e8;
+    outline-offset: 2px;
+  }
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 13px;
+
+  & thead th {
+    padding: 12px;
+    background: #f7f9fb;
+    color: #647184;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  & td {
+    padding: 13px 12px;
+    border-top: 1px solid #e4e9f0;
+    color: #202731;
+    line-height: 1.4;
+  }
+
+  & tbody tr:hover {
+    background: #f8fafc;
+  }
+}
+
+.breakValue {
+  max-width: 240px;
+  font-size: 12px;
+  word-break: break-all;
+}
+
+.cardNote {
+  margin: 0;
+  padding: 14px 16px;
+  border-top: 1px solid #e4e9f0;
+  color: #647184;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+/* =========================
+   Pills
+========================= */
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 9px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.critical,
+.malicious {
+  background: #fde4e4;
+  color: #a52a2a;
+}
+
+.triage {
+  background: #ece8fb;
+  color: #4b3a99;
+}
+
+.internal {
+  background: #eef2f7;
+  color: #202731;
+}
+
+.suspicious {
+  background: #fdf1d6;
+  color: #8a5a00;
+}
+
+.count {
+  display: inline-grid;
+  place-items: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  border-radius: 11px;
+  background: #eef2f7;
+  color: #202731;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+/* =========================
+   Raw payload
+========================= */
+
+.payload {
+  margin: 0;
+  padding: 16px;
+  overflow-x: auto;
+  border-radius: 6px;
+  background: #0f1729;
+  color: #e2e8f0;
+  font-family: Consolas, 'Courier New', monospace;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+/* =========================
+   Related alerts
+========================= */
+
+.related {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  & li {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 12px 16px;
+    font-size: 12px;
+  }
+
+  & li + li {
+    border-top: 1px solid #e4e9f0;
+  }
+
+  & a {
+    color: #4264e8;
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none;
+
+    &:hover {
+      text-decoration: underline;
+    }
+
+    &:focus-visible {
+      outline: 2px solid #4264e8;
+      outline-offset: 2px;
+    }
+  }
+
+  & span {
+    color: #647184;
+  }
+}
+
+/* =========================
+   Activity
+========================= */
+
+.activity {
+  display: grid;
+  gap: 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 12px;
+
+  & time {
+    color: #647184;
+  }
+
+  & p {
+    margin: 2px 0 0;
+    color: #202731;
+    line-height: 1.5;
+  }
+}
+
+/* =========================
+   Responsive
+========================= */
+
+@media (max-width: 1100px) {
+  .columns {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 700px) {
+  .shell {
+    grid-template-columns: 180px minmax(0, 1fr);
+  }
+
+  .collapsedShell {
+    grid-template-columns: 64px minmax(0, 1fr);
+  }
+
+  .main {
+    padding: 20px 16px 40px;
+  }
+
+  .alertHeaderTop {
+    flex-direction: column-reverse;
+  }
+
+  .sla {
+    align-items: flex-start;
+  }
+
+  .details div {
+    grid-template-columns: 1fr;
+    gap: 2px;
+  }
+}
