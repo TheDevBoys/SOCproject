@@ -3,13 +3,14 @@ using Microsoft.EntityFrameworkCore;
 using SocManagement.Api.Data;
 using SocManagement.Api.DTOs;
 using SocManagement.Api.Models;
-
+using Microsoft.AspNetCore.Authorization;
 namespace SocManagement.Api.Controllers;
 
 // Vertelt ASP.NET dat dit een API-controller is.
 // Dit zorgt ook dat een object-parameter (zoals CreateCustomerDto)
 // automatisch uit de JSON in de body van het verzoek komt.
 [ApiController]
+[Authorize]
 // Alle methodes in deze controller zijn bereikbaar via .../api/customers
 [Route("api/customers")]
 public class CustomersController : ControllerBase

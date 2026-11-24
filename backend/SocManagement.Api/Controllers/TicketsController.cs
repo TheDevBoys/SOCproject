@@ -3,19 +3,24 @@ using Microsoft.EntityFrameworkCore;
 using SocManagement.Api.Data;
 using SocManagement.Api.DTOs;
 using SocManagement.Api.Models;
+using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims; // nodig om de ingelogde gebruikers te lezen.
 
 namespace SocManagement.Api.Controllers;
 
 //verteld asp.net dat dit een api controller is.
 [ApiController]
+//authorisatie, niet ingelogd direct 401
+[Authorize]
 //route bepaalt de adres. alle methodes in de controller zijn bereikbaar via .../api/tickets
 [Route("api/tickets")]
+
 
 public class TicketsController : ControllerBase
 {
     // verbinding met de database. private en readonly dit betekend dat dit alleen deze klasse er bij mag en na het instellen niet meer aangepast kan worden.
     private readonly SocDbContext _context;
-
+    private static readonly string[] AllowedStatuses = {"Open", "InProgress", "Closed"};
     public TicketsController(SocDbContext context)// constructor dependency injection
     {
         _context = context;
@@ -25,35 +30,16 @@ public class TicketsController : ControllerBase
     public async Task<ActionResult<List<TicketDto>>> GetTickets()
     {
         var tickets = await _context.Tickets // varaiable aanmaken waar bij _context.Tickets de tabel tickets uit de db haalt.
-        .Select(t => new TicketDto
-            {
-                Id = t.Id,
-                Title = t.Title,
-                Description = t.Description,
-                Status = t.Status,
-                Severity = t.Severity,
-                Priority = t.Priority,
-                CreatedAt = t.CreatedAt,
-                CustomerId = t.CustomerId,
-                AssignedUserId = t.AssignedUserId
-            })
+        .Select(t => ToDto(t))
         .ToListAsync();// voert de query uit en zet het resultaat in een lijst.
         return Ok(tickets);// returnt de lijst met tickets in een ok response. dankzijn ActionResult<list..
     }
     [HttpGet("{id:int}")]
     public async  Task<ActionResult<TicketDto>> GetTicket(int id){
-        var ticket = await _context.Tickets.Where(t => t.Id == id).Select(t => new TicketDto// where zoekt naar de ticket waar id gelijk is aan id
-        {// select zet de ticket om naar ticket dto
-            Id = t.Id,
-                Title = t.Title,
-                Description = t.Description,
-                Status = t.Status,
-                Severity = t.Severity,
-                Priority = t.Priority,
-                CreatedAt = t.CreatedAt,
-                CustomerId = t.CustomerId,
-                AssignedUserId = t.AssignedUserId
-        }).FirstOrDefaultAsync();// geef het eerste resultaat of null als er geen ticket bestaat
+        var ticket = await _context.Tickets
+            .Where(t => t.Id == id) // where zoekt naar de ticket waar id gelijk is aan id
+            .Select(t => ToDto(t)) // select zet de ticket om naar ticket dto
+            .FirstOrDefaultAsync(); // geef het eerste resultaat of null als er geen ticket bestaat
 
         if(ticket == null)
         {
@@ -107,7 +93,97 @@ public class TicketsController : ControllerBase
 
         await _context.SaveChangesAsync();// savechangesasync slaat het echt op in de database daarna heeft ticket.id de waarde die de database heeft gekozen.
 
-        var result = new TicketDto
+        var result = ToDto(ticket);
+        // CreatedAtAction = statuscode 201 (aangemaakt) en in de header
+        // staat de URL van het nieuwe ticket (verwijst naar GetTicket).
+        return CreatedAtAction(nameof(GetTicket), new { id = ticket.Id }, result);
+    }
+
+    [HttpPatch("{id:int}/status")]// patch dus deel van iets wijzigen.
+    
+    public async Task<ActionResult<TicketDto>> UpdateStatus(int id, UpdateTicketStatusDto dto)
+    {
+        if(!AllowedStatuses.Contains(dto.Status))
+        {
+            return BadRequest("Status must be Open, InProgress or Closed.");
+        }
+
+        var ticket = await _context.Tickets.FindAsync(id); // findasync op basis van id(pk), model word gebruikt geen dto
+
+        if(ticket == null)
+        {
+            return NotFound();
+        }
+
+        var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!); // id ophalen van de gebruiker om later te achterhalen wie het heeft aangepast.
+
+        _context.TicketHistories.Add(new TicketHistory
+        {
+            TicketId = ticket.Id,
+            UserId = userId,
+            Action = $"Status changed from {ticket.Status} to {dto.Status}",
+            Timestamp = DateTime.UtcNow
+        });// dit is de geschiedenis opslag die we maken van wat er gebeurd is om het later terug te kunnen vinden wie de status heeft aangepast.
+
+        ticket.Status = dto.Status;// past de status aan, ef core ziet zelf dat het ticket is veranderd.
+
+        await _context.SaveChangesAsync();// slaat alles ineen keer op.
+
+        // nu geven de aangepast dto terug dus de 2e ronden van de dto waar die na de database weer na de model word terug gestuurd.
+        return Ok(ToDto(ticket));
+    }
+    [HttpPatch("{id:int}/assign")]
+    public async Task<ActionResult<TicketDto>> AssignTicket(int id, AssignTicketDto dto)
+    {
+        var ticket = await _context.Tickets.FindAsync(id);//  zoek ticket die we gaan wijzigen.
+
+        if (ticket == null)// wanneer de ticket niet bestaat stuur je fout code
+        {
+            return NotFound();
+        }
+
+        if (dto.AssignedUserId.HasValue) 
+        {
+            var userExists = await _context.Users.AnyAsync(u => u.Id == dto.AssignedUserId.Value);
+
+            if (!userExists)
+            {
+                return BadRequest("Assigned user does not exist.");
+            }
+        }
+        var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+
+        // Tekst voor de geschiedenis: toegewezen of toewijzing weggehaald.
+        var action = dto.AssignedUserId.HasValue
+        ? $"Assigned to user {dto.AssignedUserId.Value}"//? korte if else als de eerste niet waar is de dan : -> tweede.
+        : "Assignment removed";
+
+        // schrijven van geschiedenis wie wat heeft gedaan.
+        _context.TicketHistories.Add(new TicketHistory
+        {
+            TicketId = ticket.Id,
+            UserId = userId,
+            Action = action,
+            Timestamp = DateTime.UtcNow
+        });
+        // toewijzing aanpassen 
+        ticket.AssignedUserId = dto.AssignedUserId;
+
+        //sla de wijziging van de geschiedenisregel samen op.
+        await _context.SaveChangesAsync();
+
+         // Geef het bijgewerkte ticket terug (200).
+        return Ok(ToDto(ticket));
+    }
+
+    // Hulpmethode: zet een Ticket (model) om naar een TicketDto.
+    // private = alleen deze controller gebruikt hem.
+    // static = hij heeft niets van de controller nodig (geen _context),
+    //          alleen het ticket dat je meegeeft.
+    // Moet er later een veld bij? Dan pas je alleen deze methode aan.
+    private static TicketDto ToDto(Ticket ticket)
+    {
+        return new TicketDto
         {
             Id = ticket.Id,
             Title = ticket.Title,
@@ -119,8 +195,5 @@ public class TicketsController : ControllerBase
             CustomerId = ticket.CustomerId,
             AssignedUserId = ticket.AssignedUserId
         };
-        // CreatedAtAction = statuscode 201 (aangemaakt) en in de header
-        // staat de URL van het nieuwe ticket (verwijst naar GetTicket).
-        return CreatedAtAction(nameof(GetTicket), new { id = ticket.Id }, result);
     }
 }
