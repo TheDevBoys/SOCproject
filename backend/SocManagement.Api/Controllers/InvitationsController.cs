@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Authorization;
+using SocManagement.Api.Auth;
 using Microsoft.AspNetCore.Mvc;
 using SocManagement.Api.DTOs;
 using SocManagement.Api.Enums;
@@ -19,7 +20,7 @@ public class InvitationsController : ControllerBase
 
     // POST: api/invitations
     [HttpPost]
-    [Authorize(Roles = nameof(UserRole.Superuser))]
+    [Authorize(Policy = Permissions.UserInvite)]
     public async Task<IActionResult> InviteUser(
         [FromBody] CreateInvitedUserDto request)
     {

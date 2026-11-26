@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
 using SocManagement.Api.DTOs;
 using SocManagement.Api.Services;
-using SocManagement.Api.Enums;
+using SocManagement.Api.Auth;
 
 namespace SocManagement.Api.Controllers;
 
@@ -21,7 +21,7 @@ public class UsersController : ControllerBase
 
 
     [HttpGet]
-    [Authorize(Roles = nameof(UserRole.Superuser))]
+    [Authorize(Policy = Permissions.UserRead)]
     public async Task<ActionResult<List<UserDto>>> GetUsers()
     {
         return Ok(await _userService.GetAllAsync());
@@ -30,7 +30,7 @@ public class UsersController : ControllerBase
     [HttpGet("{id:guid}")]
     public async Task<ActionResult<UserDto>> GetUser(Guid id)
     {
-        if (!User.IsInRole(nameof(UserRole.Superuser)) && CurrentUserId() != id)
+        if (!User.HasClaim(Permissions.ClaimType, Permissions.UserRead) && CurrentUserId() != id)
         {
             return Forbid();
         }
@@ -50,7 +50,7 @@ public class UsersController : ControllerBase
 
 
     [HttpPost]
-    [Authorize(Roles = nameof(UserRole.Superuser))]
+    [Authorize(Policy = Permissions.UserCreate)]
     public async Task<ActionResult<UserDto>> CreateUser(
         [FromBody] CreateUserDto request)
     {
@@ -72,7 +72,7 @@ public class UsersController : ControllerBase
     }
 
     [HttpPut("{id:guid}")]
-    [Authorize(Roles = nameof(UserRole.Superuser))]
+    [Authorize(Policy = Permissions.UserUpdate)]
     public async Task<IActionResult> UpdateUser(
         Guid id,
         [FromBody] UpdateUserDto request)
@@ -97,7 +97,7 @@ public class UsersController : ControllerBase
     }
 
     [HttpDelete("{id:guid}")]
-    [Authorize(Roles = nameof(UserRole.Superuser))]
+    [Authorize(Policy = Permissions.UserDelete)]
     public async Task<IActionResult> DeleteUser(Guid id)
     {
         if (CurrentUserId() == id)

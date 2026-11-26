@@ -1,4 +1,6 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using SocManagement.Api.Auth;
 using Microsoft.EntityFrameworkCore;
 using SocManagement.Api.Data;
 using SocManagement.Api.DTOs;
@@ -23,6 +25,7 @@ public class CustomersController : ControllerBase
 
 
     [HttpGet]
+    [Authorize(Policy = Permissions.CustomerRead)]
     public async Task<ActionResult<List<CustomerDto>>> GetCustomers()
     {
 
@@ -39,6 +42,7 @@ public class CustomersController : ControllerBase
 
 
     [HttpGet("{id:int}")]
+    [Authorize(Policy = Permissions.CustomerRead)]
     public async Task<ActionResult<CustomerDto>> GetCustomer(int id)
     {
 
@@ -63,6 +67,7 @@ public class CustomersController : ControllerBase
 
 
     [HttpPost]
+    [Authorize(Policy = Permissions.CustomerCreate)]
     public async Task<ActionResult<CustomerDto>> CreateCustomer(CreateCustomerDto dto)
     {
         var customer = new Customer

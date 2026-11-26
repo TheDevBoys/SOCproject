@@ -11,6 +11,7 @@ public class CurrentUserDto
     public string Email { get; set; } = string.Empty;
 
     public UserRole Role { get; set; }
+    public IReadOnlyList<string> Permissions { get; set; } = [];
 
     public bool MfaEnabled { get; set; }
 }

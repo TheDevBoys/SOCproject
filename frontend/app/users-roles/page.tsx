@@ -9,6 +9,7 @@ import PageTopbar from '../../src/components/layout/PageTopbar'
 import { getUsers } from '../../src/services/users'
 import { inviteUser } from '../../src/services/invitation'
 
+import type { CurrentUser } from '../../src/types/auth'
 import type { User, UserRole } from '../../src/types/user'
 
 import styles from './page.module.css'
@@ -16,14 +17,6 @@ import styles from './page.module.css'
 type Permission = {
   name: string
   roles: boolean[]
-}
-
-type CurrentUser = {
-  id: string
-  name: string
-  email: string
-  role: UserRole
-  twoFactor: boolean
 }
 
 const permissions: Permission[] = [
@@ -93,24 +86,21 @@ export default function UsersRolesPage() {
   useEffect(() => {
     async function loadData() {
       try {
-        const [usersResponse, currentUserResponse] = await Promise.all([
-          getUsers(),
-          fetch('/api/auth/me', {
-            credentials: 'include',
-            cache: 'no-store',
-          }),
-        ])
-
-        setUsers(usersResponse)
+        const currentUserResponse = await fetch('/api/auth/me', {
+          credentials: 'include',
+          cache: 'no-store',
+        })
 
         if (!currentUserResponse.ok) {
           throw new Error('Could not load current user.')
         }
 
-        const currentUserData: CurrentUser =
-          await currentUserResponse.json()
-
+        const currentUserData: CurrentUser = await currentUserResponse.json()
         setCurrentUser(currentUserData)
+
+        if (currentUserData.permissions.includes('user.read')) {
+          setUsers(await getUsers())
+        }
       } catch (error) {
         console.error('Failed to load page data:', error)
         setError('Could not load user information.')
@@ -196,6 +186,14 @@ export default function UsersRolesPage() {
     }
   }
 
+  if (!loading && !currentUser?.permissions.includes('user.read')) {
+    return <main><p role="alert">{error ?? 'You do not have access to Users & Roles.'}</p></main>
+  }
+
+  if (loading) {
+    return <main><p role="status">Loading users…</p></main>
+  }
+
   return (
     <div
       className={[
@@ -219,7 +217,7 @@ export default function UsersRolesPage() {
               ? roleLabels[currentUser.role]
               : ''
           }
-          twoFactorEnabled={currentUser?.twoFactor ?? false}
+          twoFactorEnabled={currentUser?.mfaEnabled ?? false}
           sampleData={false}
         />
 
@@ -248,7 +246,7 @@ export default function UsersRolesPage() {
                 </span>
               </div>
 
-              {currentUser?.role === 'Superuser' && (
+              {currentUser?.permissions.includes('user.invite') && (
                 <Button
                   type="button"
                   onClick={toggleInviteForm}
@@ -271,9 +269,7 @@ export default function UsersRolesPage() {
 
             {/* USERS TABLE */}
 
-            {loading ? (
-              <p>Loading users...</p>
-            ) : error ? (
+            {error ? (
               <p role="alert">{error}</p>
             ) : (
               <div className={styles.tableWrapper}>
@@ -410,7 +406,7 @@ export default function UsersRolesPage() {
 
       {/* INVITE USER MODAL */}
 
-      {showInviteForm && currentUser?.role === 'Superuser' && (
+      {showInviteForm && currentUser?.permissions.includes('user.invite') && (
         <div
           className={styles.modalBackdrop}
           onMouseDown={event => {

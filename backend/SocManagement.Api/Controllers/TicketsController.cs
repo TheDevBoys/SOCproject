@@ -1,4 +1,6 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using SocManagement.Api.Auth;
 using Microsoft.EntityFrameworkCore;
 using SocManagement.Api.Data;
 using SocManagement.Api.DTOs;
@@ -21,6 +23,7 @@ public class TicketsController : ControllerBase
     }
 
     [HttpGet]
+    [Authorize(Policy = Permissions.TicketRead)]
     public async Task<ActionResult<List<TicketDto>>> GetTickets()
     {
         var tickets = await _context.Tickets 
@@ -40,6 +43,7 @@ public class TicketsController : ControllerBase
         return Ok(tickets);
     }
     [HttpGet("{id:int}")]
+    [Authorize(Policy = Permissions.TicketRead)]
     public async  Task<ActionResult<TicketDto>> GetTicket(int id){
         var ticket = await _context.Tickets.Where(t => t.Id == id).Select(t => new TicketDto
         {
@@ -62,6 +66,7 @@ public class TicketsController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Policy = Permissions.TicketCreate)]
    public async Task<ActionResult<TicketDto>> CreateTicket(CreateTicketDto dto)
     {
         

@@ -91,6 +91,7 @@ public class AuthController : ControllerBase
             Name = user.Name,
             Email = user.Email,
             Role = user.Role,
+            Permissions = Permissions.ForRole(user.Role),
             MfaEnabled = user.MfaEnabled
         });
     }
@@ -111,8 +112,7 @@ public class AuthController : ControllerBase
         {
             new(ClaimTypes.NameIdentifier, user.Id.ToString()),
             new(ClaimTypes.Name, user.Name),
-            new(ClaimTypes.Email, user.Email),
-            new(ClaimTypes.Role, user.Role.ToString())
+            new(ClaimTypes.Email, user.Email)
         };
 
         var principal = new ClaimsPrincipal(new ClaimsIdentity(claims, AuthSchemes.Session));
