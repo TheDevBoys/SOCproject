@@ -255,6 +255,9 @@ namespace SocManagement.Api.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<int?>("CustomerId")
+                        .HasColumnType("int");
+
                     b.Property<string>("Email")
                         .IsRequired()
                         .HasMaxLength(254)
@@ -299,6 +302,8 @@ namespace SocManagement.Api.Migrations
                         .HasColumnType("nvarchar(20)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("CustomerId");
 
                     b.HasIndex("Email")
                         .IsUnique();
@@ -527,6 +532,16 @@ namespace SocManagement.Api.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("SocManagement.Api.Models.User", b =>
+                {
+                    b.HasOne("SocManagement.Api.Models.Customer", "Customer")
+                        .WithMany("Users")
+                        .HasForeignKey("CustomerId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Customer");
+                });
+
             modelBuilder.Entity("SocManagement.Api.Models.Customer", b =>
                 {
                     b.Navigation("Alerts");
@@ -534,6 +549,8 @@ namespace SocManagement.Api.Migrations
                     b.Navigation("TenantAccesses");
 
                     b.Navigation("Tickets");
+
+                    b.Navigation("Users");
                 });
 
             modelBuilder.Entity("SocManagement.Api.Models.RetentionPolicy", b =>

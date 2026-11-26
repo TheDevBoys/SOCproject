@@ -43,6 +43,13 @@ public class SocDbContext(DbContextOptions<SocDbContext> options) : DbContext(op
                 .HasConversion<string>()
                 .HasMaxLength(20);
                 
+            // Klantgebruiker -> klant. Restrict: een klant met accounts kan niet zomaar
+            // verwijderd worden, en voorkomt meerdere cascade-paden naar TenantAccesses.
+            entity.HasOne(u => u.Customer)
+                .WithMany(c => c.Users)
+                .HasForeignKey(u => u.CustomerId)
+                .OnDelete(DeleteBehavior.Restrict);
+
             entity.HasData(SeedUsers.GetUsers());  
         });
 
