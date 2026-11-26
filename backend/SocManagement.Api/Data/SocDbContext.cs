@@ -8,6 +8,9 @@ public class SocDbContext(DbContextOptions<SocDbContext> options) : DbContext(op
 {
     public DbSet<DataProtectionKey> DataProtectionKeys => Set<DataProtectionKey>();
 
+    public DbSet<Role> Roles => Set<Role>();
+    public DbSet<Permission> Permissions => Set<Permission>();
+
     public DbSet<User> Users => Set<User>();
 
     public DbSet<Ticket> Tickets => Set<Ticket>();
@@ -38,13 +41,32 @@ public class SocDbContext(DbContextOptions<SocDbContext> options) : DbContext(op
             entity.Property(u => u.MfaSecret)
                 .HasMaxLength(512);
 
-            entity.Property(u => u.Role)
-                .HasConversion<string>()
-                .HasMaxLength(20);
+            entity.Property(u => u.Role).HasMaxLength(20);
+            entity.HasOne(u => u.AccessRole).WithMany()
+                .HasForeignKey(u => u.Role).OnDelete(DeleteBehavior.Restrict);
+            entity.HasMany(u => u.DirectPermissions).WithMany()
+                .UsingEntity("UserPermissions");
 
             entity.Property(u => u.Status)
                 .HasConversion<string>()
                 .HasMaxLength(20);
+        });
+
+        modelBuilder.Entity<Role>(entity =>
+        {
+            entity.HasKey(role => role.Name);
+            entity.Property(role => role.Name).HasMaxLength(20);
+            entity.HasMany(role => role.Permissions).WithMany()
+                .UsingEntity("RolePermissions");
+            entity.HasData(Enum.GetNames<SocManagement.Api.Enums.UserRole>()
+                .Append("TicketIntakeOfficer").Select(name => new Role { Name = name }));
+        });
+
+        modelBuilder.Entity<Permission>(entity =>
+        {
+            entity.HasKey(permission => permission.Key);
+            entity.Property(permission => permission.Key).HasMaxLength(64);
+            entity.HasData(Auth.Permissions.All.Select(key => new Permission { Key = key }));
         });
 
         modelBuilder.Entity<UserInvitation>(entity =>

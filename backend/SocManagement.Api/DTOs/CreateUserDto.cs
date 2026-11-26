@@ -1,5 +1,4 @@
 using System.ComponentModel.DataAnnotations;
-using SocManagement.Api.Enums;
 
 namespace SocManagement.Api.DTOs;
 
@@ -18,6 +17,6 @@ public class CreateUserDto
     public string Password { get; set; } = string.Empty;
 
     [Required]
-    [EnumDataType(typeof(UserRole))]
-    public UserRole Role { get; set; }
+    [MaxLength(20)]
+    public string Role { get; set; } = string.Empty;
 }

@@ -12,38 +12,8 @@ import { inviteUser } from '../../src/services/invitation'
 import type { CurrentUser } from '../../src/types/auth'
 import type { User, UserRole } from '../../src/types/user'
 
+import RoleEditor, { roleRequest, type RoleAccess, type RoleCatalog } from './RoleEditor'
 import styles from './page.module.css'
-
-type Permission = {
-  name: string
-  roles: boolean[]
-}
-
-const permissions: Permission[] = [
-  { name: 'View alerts', roles: [true, true, true, true, false, true, true] },
-  { name: 'Triage alerts (close or promote)', roles: [true, true, true, false, false, false, false] },
-  { name: 'Create case', roles: [true, true, true, false, false, false, false] },
-  { name: 'View cases', roles: [true, true, true, true, true, true, true] },
-  { name: 'Escalate case', roles: [true, true, false, false, false, false, false] },
-  { name: 'Close case', roles: [false, true, true, false, false, false, false] },
-  { name: 'Download evidence', roles: [false, true, true, false, false, false, true] },
-  { name: 'Manage customers', roles: [false, false, false, false, true, true, false] },
-  { name: 'Grant customer access', roles: [false, false, false, false, false, true, false] },
-  { name: 'Manage users and roles', roles: [false, false, false, false, false, true, false] },
-  { name: 'Change retention policy', roles: [false, false, false, false, false, true, false] },
-  { name: 'View audit log', roles: [false, false, true, false, false, true, false] },
-  { name: 'View reports', roles: [false, false, false, false, true, true, false] },
-]
-
-const roles = [
-  'Tier 1',
-  'Tier 2',
-  'Tier 3',
-  'Engineer',
-  'Account manager',
-  'Superuser',
-  'Forensics',
-]
 
 const roleLabels: Record<UserRole, string> = {
   Superuser: 'Superuser',
@@ -56,7 +26,11 @@ const roleLabels: Record<UserRole, string> = {
   Customer: 'Customer',
 }
 
-const availableRoles = Object.keys(roleLabels) as UserRole[]
+
+
+function roleLabel(role: string) {
+  return Object.hasOwn(roleLabels, role) ? roleLabels[role] : role
+}
 
 function formatLastSignIn(lastSignIn: string | null): string {
   if (!lastSignIn) {
@@ -73,6 +47,27 @@ export default function UsersRolesPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [collapsed, setCollapsed] = useState(false)
+  const [catalog, setCatalog] = useState<RoleCatalog | null>(null)
+  const [editor, setEditor] = useState<{ mode: 'create' | 'role' | 'user'; initial: RoleAccess; target?: string } | null>(null)
+  const [accessError, setAccessError] = useState('')
+  const availableRoles = catalog?.roles.map(role => role.name) ?? ['Tier1']
+
+  async function editUserAccess(user: User) {
+    setAccessError('')
+    try {
+      const initial = await roleRequest<RoleAccess>(`/users/${user.id}`)
+      setEditor({ mode: 'user', target: user.id, initial })
+    } catch (error) {
+      setAccessError(error instanceof Error ? error.message : 'Could not load user access.')
+    }
+  }
+
+  async function refreshAccess() {
+    const [roles, users] = await Promise.all([roleRequest<RoleCatalog>(), getUsers()])
+    setCatalog(roles)
+    setUsers(users)
+    setEditor(null)
+  }
 
   const [showInviteForm, setShowInviteForm] = useState(false)
   const [inviteName, setInviteName] = useState('')
@@ -97,6 +92,10 @@ export default function UsersRolesPage() {
 
         const currentUserData: CurrentUser = await currentUserResponse.json()
         setCurrentUser(currentUserData)
+
+        if (currentUserData.permissions.includes('role.manage')) {
+          setCatalog(await roleRequest<RoleCatalog>())
+        }
 
         if (currentUserData.permissions.includes('user.read')) {
           setUsers(await getUsers())
@@ -214,7 +213,7 @@ export default function UsersRolesPage() {
           userName={currentUser?.name ?? ''}
           userRole={
             currentUser
-              ? roleLabels[currentUser.role]
+              ? roleLabel(currentUser.role)
               : ''
           }
           twoFactorEnabled={currentUser?.mfaEnabled ?? false}
@@ -293,7 +292,10 @@ export default function UsersRolesPage() {
                         </td>
 
                         <td>
-                          {roleLabels[user.role]}
+                          {roleLabel(user.role)}
+                          {catalog && user.role !== 'Superuser' && (
+                            <Button type="button" onClick={() => editUserAccess(user)}>Edit access</Button>
+                          )}
                         </td>
 
                         <td>
@@ -327,80 +329,41 @@ export default function UsersRolesPage() {
             )}
           </section>
 
-          {/* ROLES AND PERMISSIONS */}
-
-          <section
-            className={styles.card}
-            aria-labelledby="roles-heading"
-          >
-            <div className={styles.cardHeader}>
-              <div className={styles.cardTitle}>
-                <h2 id="roles-heading">
-                  Roles and permissions
-                </h2>
-
-                <span className={styles.subtitle}>
-                  Superusers can build custom roles
-                </span>
+          {catalog && (
+            <section className={styles.card} aria-labelledby="roles-heading">
+              <div className={styles.cardHeader}>
+                <h2 id="roles-heading">Roles and permissions</h2>
+                <Button type="button" onClick={() => setEditor({ mode: 'create', initial: { name: '', permissions: [] } })}>
+                  New role
+                </Button>
               </div>
-
-              <Button type="button">
-                New role
-              </Button>
-            </div>
-
-            <div className={styles.tableWrapper}>
-              <table className={styles.permissionsTable}>
-                <thead>
-                  <tr>
-                    <th>Permission</th>
-
-                    {roles.map(role => (
-                      <th key={role}>
-                        {role}
-                      </th>
+              {accessError && <p role="alert">{accessError}</p>}
+              {editor && (
+                <RoleEditor key={editor.target ?? editor.initial.name} {...editor}
+                  catalog={catalog} onSaved={refreshAccess} onCancel={() => setEditor(null)} />
+              )}
+              <div className={styles.tableWrapper}>
+                <table className={styles.permissionsTable}>
+                  <thead>
+                    <tr><th>Role</th><th>Permissions</th><th>Actions</th></tr>
+                  </thead>
+                  <tbody>
+                    {catalog.roles.map(role => (
+                      <tr key={role.name}>
+                        <td>{roleLabel(role.name)}</td>
+                        <td>{role.permissions.join(', ') || '—'}</td>
+                        <td>{role.name !== 'Superuser' && (
+                          <Button type="button" onClick={() => setEditor({ mode: 'role', initial: role })}>
+                            Edit permissions
+                          </Button>
+                        )}</td>
+                      </tr>
                     ))}
-                  </tr>
-                </thead>
-
-                <tbody>
-                  {permissions.map(permission => (
-                    <tr key={permission.name}>
-                      <td>{permission.name}</td>
-
-                      {permission.roles.map((allowed, index) => (
-                        <td
-                          key={`${permission.name}-${roles[index]}`}
-                        >
-                          <span
-                            className={
-                              allowed
-                                ? styles.allowed
-                                : styles.denied
-                            }
-                          >
-                            {allowed ? '✓' : '–'}
-                          </span>
-                        </td>
-                      ))}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
-            <div className={styles.cardFooter}>
-              <p>
-                Every permission only applies within customers
-                the user has access to (see Customer access).
-              </p>
-
-              <p>
-                * Superusers see customer data only after an
-                access request; every view is logged in the audit log.
-              </p>
-            </div>
-          </section>
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          )}
         </main>
       </div>
 
@@ -537,7 +500,7 @@ export default function UsersRolesPage() {
                 >
                   {availableRoles.map(role => (
                     <option key={role} value={role}>
-                      {roleLabels[role]}
+                      {roleLabel(role)}
                     </option>
                   ))}
                 </select>

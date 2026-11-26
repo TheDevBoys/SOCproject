@@ -91,7 +91,7 @@ public class AuthController : ControllerBase
             Name = user.Name,
             Email = user.Email,
             Role = user.Role,
-            Permissions = Permissions.ForRole(user.Role),
+            Permissions = Permissions.ForUser(user),
             MfaEnabled = user.MfaEnabled
         });
     }

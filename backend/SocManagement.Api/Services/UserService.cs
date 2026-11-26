@@ -83,11 +83,6 @@ public class UserService : IUserService
 
         user.Email = email;
 
-        if (request.Role.HasValue)
-        {
-            user.Role = request.Role.Value;
-        }
-
         await _context.SaveChangesAsync();
 
         return UserUpdateResult.Updated;

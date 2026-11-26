@@ -36,7 +36,7 @@ public class InvitationService : IInvitationService
     public async Task<UserInvitation> InviteUserAsync(
         string name,
         string email,
-        UserRole role,
+        string role,
         TimeSpan? expiration = null)
     {
         name = name.Trim();
@@ -47,7 +47,8 @@ public class InvitationService : IInvitationService
             throw new ArgumentException("Name and email are required.");
         }
 
-        if (!Enum.IsDefined(role))
+        var selectedRole = await _context.Roles.FindAsync(role);
+        if (selectedRole is null)
         {
             throw new ArgumentException("Invalid user role.", nameof(role));
         }
@@ -87,7 +88,7 @@ public class InvitationService : IInvitationService
             Id = Guid.NewGuid(),
             Name = name,
             Email = email,
-            Role = role,
+            Role = selectedRole.Name,
             Status = UserStatus.Invited,
             MfaEnabled = true,
             PasswordHash = string.Empty

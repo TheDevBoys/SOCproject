@@ -1,8 +1,9 @@
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.EntityFrameworkCore;
+using SocManagement.Api.Data;
 using SocManagement.Api.Auth;
 using Microsoft.AspNetCore.Mvc;
 using SocManagement.Api.DTOs;
-using SocManagement.Api.Enums;
 using SocManagement.Api.Services;
 
 namespace SocManagement.Api.Controllers;
@@ -12,10 +13,12 @@ namespace SocManagement.Api.Controllers;
 public class InvitationsController : ControllerBase
 {
     private readonly IInvitationService _invitationService;
+    private readonly SocDbContext _context;
 
-    public InvitationsController(IInvitationService invitationService)
+    public InvitationsController(IInvitationService invitationService, SocDbContext context)
     {
         _invitationService = invitationService;
+        _context = context;
     }
 
     // POST: api/invitations
@@ -24,13 +27,16 @@ public class InvitationsController : ControllerBase
     public async Task<IActionResult> InviteUser(
         [FromBody] CreateInvitedUserDto request)
     {
-        if (!request.Role.HasValue ||
-            !Enum.IsDefined(request.Role.Value))
+        var role = await _context.Roles.Include(role => role.Permissions)
+            .SingleOrDefaultAsync(role => role.Name == request.Role);
+        if (role is null)
         {
-            return BadRequest(new
-            {
-                message = "A valid role is required."
-            });
+            return BadRequest(new { message = "Select an existing role." });
+        }
+
+        if (!Permissions.CanAssignRole(User, role))
+        {
+            return Forbid();
         }
 
         try
@@ -38,7 +44,7 @@ public class InvitationsController : ControllerBase
             var invitation = await _invitationService.InviteUserAsync(
                 request.Name,
                 request.Email,
-                request.Role.Value
+                role.Name
             );
 
             return StatusCode(StatusCodes.Status201Created, new

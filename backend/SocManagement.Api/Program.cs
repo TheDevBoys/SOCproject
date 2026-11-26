@@ -59,7 +59,7 @@ builder.Services
             var identity = new ClaimsIdentity(
                 [new Claim(ClaimTypes.NameIdentifier, user.Id.ToString())],
                 AuthSchemes.Session);
-            identity.AddClaims(Permissions.ForRole(user.Role)
+            identity.AddClaims(Permissions.ForUser(user)
                 .Select(permission => new Claim(Permissions.ClaimType, permission)));
             context.ReplacePrincipal(new ClaimsPrincipal(identity));
         };
@@ -77,7 +77,7 @@ builder.Services.AddAuthorization(options =>
         .RequireAssertion(_ => false)
         .Build();
 
-    foreach (var permission in Permissions.All)
+    foreach (var permission in Permissions.All.Append(Permissions.RoleManage))
     {
         options.AddPolicy(permission, policy => policy
             .AddAuthenticationSchemes(AuthSchemes.Session)

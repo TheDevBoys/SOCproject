@@ -1,10 +1,13 @@
+using System.Security.Claims;
 using SocManagement.Api.Enums;
+using SocManagement.Api.Models;
 
 namespace SocManagement.Api.Auth;
 
 public static class Permissions
 {
     public const string ClaimType = "soc.permission";
+    public const string RoleManage = "role.manage";
     public const string UserRead = "user.read";
     public const string UserCreate = "user.create";
     public const string UserUpdate = "user.update";
@@ -22,6 +25,16 @@ public static class Permissions
             CustomerRead, CustomerCreate, TicketRead, TicketCreate
         });
 
-    public static IReadOnlyList<string> ForRole(UserRole role) =>
-        role == UserRole.Superuser ? All : Array.Empty<string>();
+    public static bool CanAssignRole(ClaimsPrincipal actor, Role role) =>
+        actor.HasClaim(ClaimType, RoleManage) ||
+        (role.Name == nameof(UserRole.Tier1) &&
+         role.Permissions.All(permission => actor.HasClaim(ClaimType, permission.Key)));
+
+    public static IReadOnlyList<string> ForUser(User user) =>
+        user.Role == nameof(UserRole.Superuser)
+            ? All.Append(RoleManage).ToArray()
+            : user.AccessRole.Permissions.Select(permission => permission.Key)
+                .Union(user.DirectPermissions.Select(permission => permission.Key))
+                .Intersect(All)
+                .ToArray();
 }

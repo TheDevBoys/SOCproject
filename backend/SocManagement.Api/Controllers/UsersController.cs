@@ -1,4 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using SocManagement.Api.Data;
+using SocManagement.Api.Enums;
 using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
 using SocManagement.Api.DTOs;
@@ -13,10 +16,12 @@ namespace SocManagement.Api.Controllers;
 public class UsersController : ControllerBase
 {
     private readonly IUserService _userService;
+    private readonly SocDbContext _context;
 
-    public UsersController(IUserService userService)
+    public UsersController(IUserService userService, SocDbContext context)
     {
         _userService = userService;
+        _context = context;
     }
 
 
@@ -54,6 +59,19 @@ public class UsersController : ControllerBase
     public async Task<ActionResult<UserDto>> CreateUser(
         [FromBody] CreateUserDto request)
     {
+        var role = await _context.Roles.Include(role => role.Permissions)
+            .SingleOrDefaultAsync(role => role.Name == request.Role);
+        if (role is null)
+        {
+            return BadRequest(new { message = "Select an existing role." });
+        }
+
+        if (!Permissions.CanAssignRole(User, role))
+        {
+            return Forbid();
+        }
+
+        request.Role = role.Name;
         var user = await _userService.CreateAsync(request);
 
         if (user == null)
@@ -77,6 +95,12 @@ public class UsersController : ControllerBase
         Guid id,
         [FromBody] UpdateUserDto request)
     {
+        if (!User.HasClaim(Permissions.ClaimType, Permissions.RoleManage) &&
+            await IsSuperuserAsync(id))
+        {
+            return Forbid();
+        }
+
         var result = await _userService.UpdateAsync(id, request);
 
         return result switch
@@ -108,6 +132,11 @@ public class UsersController : ControllerBase
             });
         }
 
+        if (await IsSuperuserAsync(id))
+        {
+            return Forbid();
+        }
+
         var deleted = await _userService.DeleteAsync(id);
 
         if (!deleted)
@@ -120,6 +149,9 @@ public class UsersController : ControllerBase
 
         return NoContent();
     }
+
+    private Task<bool> IsSuperuserAsync(Guid id) =>
+        _context.Users.AnyAsync(user => user.Id == id && user.Role == nameof(UserRole.Superuser));
 
     private Guid? CurrentUserId() =>
         Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var id) ? id : null;
