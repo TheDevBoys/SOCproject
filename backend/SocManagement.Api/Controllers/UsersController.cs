@@ -19,7 +19,7 @@ public class UsersController : ControllerBase
         _userService = userService;
     }
 
-    // GET: api/users
+
     [HttpGet]
     [Authorize(Roles = nameof(UserRole.Superuser))]
     public async Task<ActionResult<List<UserDto>>> GetUsers()
@@ -48,7 +48,7 @@ public class UsersController : ControllerBase
         return Ok(user);
     }
 
-    // POST: api/users
+
     [HttpPost]
     [Authorize(Roles = nameof(UserRole.Superuser))]
     public async Task<ActionResult<UserDto>> CreateUser(
@@ -112,7 +112,6 @@ public class UsersController : ControllerBase
         };
     }
 
-    // DELETE: api/users/1
     [HttpDelete("{id:guid}")]
     [Authorize(Roles = nameof(UserRole.Superuser))]
     public async Task<IActionResult> DeleteUser(Guid id)

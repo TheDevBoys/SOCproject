@@ -1,0 +1,96 @@
+/* Only what is specific to the first-time 2FA setup. The card, the code boxes
+   and the error text come from AuthCard, CodeInput and FormError. */
+
+.setup {
+  margin-bottom: 18px;
+  padding: 14px;
+  border: 1px solid #d7dee8;
+  border-radius: 6px;
+  background: #f7f9fc;
+}
+
+.setupText {
+  margin: 0 0 10px;
+  color: #647184;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.qr {
+  display: block;
+  margin: 0 auto;
+}
+
+.setupToggle {
+  display: block;
+  margin-top: 10px;
+  color: #4264e8;
+  font-size: 12px;
+  line-height: 1.5;
+  text-align: center;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+  list-style: none;
+
+  &::-webkit-details-marker {
+    display: none;
+  }
+
+  &:focus-visible {
+    outline: 2px solid #4264e8;
+    outline-offset: 3px;
+  }
+}
+
+.manual {
+  margin-top: 12px;
+}
+
+.secret {
+  display: block;
+  padding: 10px;
+  border: 1px dashed #bdc9d8;
+  border-radius: 5px;
+  background: #fff;
+  color: #202731;
+  font-size: 15px;
+  letter-spacing: 1px;
+  text-align: center;
+  word-break: break-all;
+  user-select: all;
+}
+
+.setupLink {
+  display: inline-block;
+  margin-top: 10px;
+  color: #4264e8;
+  font-size: 12px;
+}
+
+.instructions {
+  margin: 0 0 18px;
+  color: #647184;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.submit {
+  width: 100%;
+  margin-top: 18px;
+}
+
+.backLink {
+  display: inline-block;
+  margin-top: 20px;
+  color: #4264e8;
+  font-size: 12px;
+  line-height: 1.5;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+
+  &:focus-visible {
+    outline: 2px solid #4264e8;
+    outline-offset: 3px;
+  }
+}
