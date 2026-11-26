@@ -104,6 +104,7 @@ export default function CasesPage() {
           <div className={styles.pageHeader}>
             <h1>Cases</h1>
             <p>Investigations created from alerts. Escalated cases wait in the right tier queue until someone picks them up.</p>
+            <p>Alerts are created by the SOC platform when a potential security incident is detected.</p>
           </div>
 
           <section className={[styles.card, styles.queue].join(' ')} aria-labelledby="queue-heading">
