@@ -18,7 +18,7 @@ public class SocDbContext(DbContextOptions<SocDbContext> options) : DbContext(op
     public DbSet<TicketHistory> TicketHistories => Set<TicketHistory>();
     public DbSet<SLA> Slas => Set<SLA>();
     public DbSet<RetentionPolicy> RetentionPolicies => Set<RetentionPolicy>();
-    public DbSet<TenantAccess> TenantAccesses => Set<TenantAccess>();
+    public DbSet<CustomerAccess> CustomerAccesses => Set<CustomerAccess>();
     public DbSet<UserInvitation> UserInvitations => Set<UserInvitation>();
     
 
@@ -48,7 +48,7 @@ public class SocDbContext(DbContextOptions<SocDbContext> options) : DbContext(op
                 .HasMaxLength(20);
                 
             // Klantgebruiker -> klant. Restrict: een klant met accounts kan niet zomaar
-            // verwijderd worden, en voorkomt meerdere cascade-paden naar TenantAccesses.
+            // verwijderd worden, en voorkomt meerdere cascade-paden naar CustomerAccesses.
             entity.HasOne(u => u.Customer)
                 .WithMany(c => c.Users)
                 .HasForeignKey(u => u.CustomerId)
@@ -70,16 +70,16 @@ public class SocDbContext(DbContextOptions<SocDbContext> options) : DbContext(op
                 .OnDelete(DeleteBehavior.Cascade);
         });
 
-        modelBuilder.Entity<TenantAccess>(entity =>
+        modelBuilder.Entity<CustomerAccess>(entity =>
         {
             entity.HasKey(t => new { t.UserId, t.CustomerId });
 
             entity.HasOne(t => t.User)
-                .WithMany(u => u.TenantAccesses)
+                .WithMany(u => u.CustomerAccesses)
                 .HasForeignKey(t => t.UserId);
 
             entity.HasOne(t => t.Customer)
-                .WithMany(c => c.TenantAccesses)
+                .WithMany(c => c.CustomerAccesses)
                 .HasForeignKey(t => t.CustomerId);
         });
     }

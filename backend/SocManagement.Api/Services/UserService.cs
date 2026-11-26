@@ -26,7 +26,7 @@ public class UserService : IUserService
             .Select(u => new
             {
                 User = u,
-                CustomerCount = u.TenantAccesses.Count
+                CustomerCount = u.CustomerAccesses.Count
             })
             .ToListAsync();
 
@@ -41,7 +41,7 @@ public class UserService : IUserService
             .Select(u => new
             {
                 User = u,
-                CustomerCount = u.TenantAccesses.Count
+                CustomerCount = u.CustomerAccesses.Count
             })
             .FirstOrDefaultAsync();
 
@@ -113,9 +113,9 @@ public class UserService : IUserService
 
         // RRM: klantgebruikers krijgen geen KlantToegang.
         if (newRole == UserRole.Customer &&
-            await _context.TenantAccesses.AnyAsync(t => t.UserId == id))
+            await _context.CustomerAccesses.AnyAsync(t => t.UserId == id))
         {
-            return UserSaveResult.HasTenantAccess;
+            return UserSaveResult.HasCustomerAccess;
         }
 
         user.Email = email;

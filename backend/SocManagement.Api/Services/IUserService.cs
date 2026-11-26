@@ -21,5 +21,5 @@ public enum UserSaveResult
     NotFound,
     EmailTaken,
     InvalidCustomerLink,
-    HasTenantAccess
+    HasCustomerAccess
 }

@@ -1,6 +1,6 @@
 namespace SocManagement.Api.Services;
 
-public interface ITenantService
+public interface ICustomerAccessService
 {
     Task<List<int>> GetAllowedCustomerIdsAsync(Guid userId);
 }

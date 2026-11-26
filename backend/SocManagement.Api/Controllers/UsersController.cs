@@ -101,7 +101,7 @@ public class UsersController : ControllerBase
             {
                 message = "Role Customer requires an existing customerId; other roles cannot have a customerId."
             }),
-            UserSaveResult.HasTenantAccess => Conflict(new
+            UserSaveResult.HasCustomerAccess => Conflict(new
             {
                 message = "Remove this user's customer access before changing the role to Customer."
             }),

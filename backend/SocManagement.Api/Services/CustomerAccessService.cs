@@ -3,21 +3,21 @@ using SocManagement.Api.Data;
 
 namespace SocManagement.Api.Services;
 
-public class TenantService : ITenantService
+public class CustomerAccessService : ICustomerAccessService
 {
     private readonly SocDbContext _context;
 
-    public TenantService(SocDbContext context)
+    public CustomerAccessService(SocDbContext context)
     {
         _context = context;
     }
 
     public async Task<List<int>> GetAllowedCustomerIdsAsync(Guid userId)
     {
-        return await _context.TenantAccesses
+        return await _context.CustomerAccesses
             .AsNoTracking()
-            .Where(ta => ta.UserId == userId)
-            .Select(ta => ta.CustomerId)
+            .Where(ca => ca.UserId == userId)
+            .Select(ca => ca.CustomerId)
             .ToListAsync();
     }
 }
