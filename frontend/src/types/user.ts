@@ -1,12 +1,4 @@
-export type UserRole =
-  | 'Superuser'
-  | 'Tier1'
-  | 'Tier2'
-  | 'Tier3'
-  | 'Engineer'
-  | 'AccountManager'
-  | 'ForensicAnalyst'
-  | 'Customer'
+export type UserRole = string
 
 export type UserStatus = 'Active' | 'Invited'
 

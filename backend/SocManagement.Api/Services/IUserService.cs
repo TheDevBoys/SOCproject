@@ -12,7 +12,7 @@ public interface IUserService
 
     Task<UserSaveResult> UpdateAsync(Guid id, UpdateUserDto request);
 
-    Task<bool> DeleteAsync(Guid id);
+    Task<UserDeleteResult> DeleteAsync(Guid id);
 }
 
 public enum UserSaveResult
@@ -22,4 +22,12 @@ public enum UserSaveResult
     EmailTaken,
     InvalidCustomerLink,
     HasTenantAccess
+}
+
+public enum UserDeleteResult
+{
+    Deleted,
+    NotFound,
+    Protected,
+    HasTicketRecords
 }

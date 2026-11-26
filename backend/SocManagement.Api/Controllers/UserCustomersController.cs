@@ -1,14 +1,14 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SocManagement.Api.DTOs;
-using SocManagement.Api.Enums;
+using SocManagement.Api.Auth;
 using SocManagement.Api.Services;
 
 namespace SocManagement.Api.Controllers;
 
 // Klanttoegang (KlantToegang / TenantAccess) per gebruiker beheren. Alleen Superusers.
 [ApiController]
-[Authorize(Roles = nameof(UserRole.Superuser))]
+[Authorize(Policy = Permissions.RoleManage)]
 [Route("api/users/{userId:guid}/customers")]
 public class UserCustomersController : ControllerBase
 {

@@ -9,61 +9,13 @@ import PageTopbar from '../../src/components/layout/PageTopbar'
 import { getUsers } from '../../src/services/users'
 import { inviteUser } from '../../src/services/invitation'
 
+import type { CurrentUser } from '../../src/types/auth'
+import { roleLabel } from '../../src/types/roleLabels'
 import type { User, UserRole } from '../../src/types/user'
 
+import UserActionDialog, { UserDialog } from './UserActionDialog'
+import RoleEditor, { roleRequest, type RoleAccess, type RoleCatalog } from './RoleEditor'
 import styles from './page.module.css'
-
-type Permission = {
-  name: string
-  roles: boolean[]
-}
-
-type CurrentUser = {
-  id: string
-  name: string
-  email: string
-  role: UserRole
-  twoFactor: boolean
-}
-
-const permissions: Permission[] = [
-  { name: 'View alerts', roles: [true, true, true, true, false, true, true] },
-  { name: 'Triage alerts (close or promote)', roles: [true, true, true, false, false, false, false] },
-  { name: 'Create case', roles: [true, true, true, false, false, false, false] },
-  { name: 'View cases', roles: [true, true, true, true, true, true, true] },
-  { name: 'Escalate case', roles: [true, true, false, false, false, false, false] },
-  { name: 'Close case', roles: [false, true, true, false, false, false, false] },
-  { name: 'Download evidence', roles: [false, true, true, false, false, false, true] },
-  { name: 'Manage customers', roles: [false, false, false, false, true, true, false] },
-  { name: 'Grant customer access', roles: [false, false, false, false, false, true, false] },
-  { name: 'Manage users and roles', roles: [false, false, false, false, false, true, false] },
-  { name: 'Change retention policy', roles: [false, false, false, false, false, true, false] },
-  { name: 'View audit log', roles: [false, false, true, false, false, true, false] },
-  { name: 'View reports', roles: [false, false, false, false, true, true, false] },
-]
-
-const roles = [
-  'Tier 1',
-  'Tier 2',
-  'Tier 3',
-  'Engineer',
-  'Account manager',
-  'Superuser',
-  'Forensics',
-]
-
-const roleLabels: Record<UserRole, string> = {
-  Superuser: 'Superuser',
-  Tier1: 'Tier 1 analyst',
-  Tier2: 'Tier 2 analyst',
-  Tier3: 'Tier 3 analyst',
-  Engineer: 'Engineer',
-  AccountManager: 'Account manager',
-  ForensicAnalyst: 'Forensic analyst',
-  Customer: 'Customer',
-}
-
-const availableRoles = Object.keys(roleLabels) as UserRole[]
 
 function formatLastSignIn(lastSignIn: string | null): string {
   if (!lastSignIn) {
@@ -80,10 +32,34 @@ export default function UsersRolesPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [collapsed, setCollapsed] = useState(false)
+  const [customers, setCustomers] = useState<{ id: number; name: string }[]>([])
+  const [catalog, setCatalog] = useState<RoleCatalog | null>(null)
+  const [editor, setEditor] = useState<{ mode: 'create' | 'role' | 'user'; initial: RoleAccess; target?: string } | null>(null)
+  const [accessError, setAccessError] = useState('')
+  const [userAction, setUserAction] = useState<{ user: User; action: 'edit' | 'delete' } | null>(null)
+  const availableRoles = catalog?.roles.map(role => role.name) ?? ['Tier1']
+
+  async function editUserAccess(user: User) {
+    setAccessError('')
+    try {
+      const initial = await roleRequest<RoleAccess>(`/users/${user.id}`)
+      setEditor({ mode: 'user', target: user.id, initial })
+    } catch (error) {
+      setAccessError(error instanceof Error ? error.message : 'Could not load user access.')
+    }
+  }
+
+  async function refreshAccess() {
+    const [roles, users] = await Promise.all([roleRequest<RoleCatalog>(), getUsers()])
+    setCatalog(roles)
+    setUsers(users)
+    setEditor(null)
+  }
 
   const [showInviteForm, setShowInviteForm] = useState(false)
   const [inviteName, setInviteName] = useState('')
   const [inviteEmail, setInviteEmail] = useState('')
+  const [inviteCustomer, setInviteCustomer] = useState('')
   const [inviteRole, setInviteRole] = useState<UserRole>('Tier1')
 
   const [inviting, setInviting] = useState(false)
@@ -93,24 +69,30 @@ export default function UsersRolesPage() {
   useEffect(() => {
     async function loadData() {
       try {
-        const [usersResponse, currentUserResponse] = await Promise.all([
-          getUsers(),
-          fetch('/api/auth/me', {
-            credentials: 'include',
-            cache: 'no-store',
-          }),
-        ])
-
-        setUsers(usersResponse)
+        const currentUserResponse = await fetch('/api/auth/me', {
+          credentials: 'include',
+          cache: 'no-store',
+        })
 
         if (!currentUserResponse.ok) {
           throw new Error('Could not load current user.')
         }
 
-        const currentUserData: CurrentUser =
-          await currentUserResponse.json()
-
+        const currentUserData: CurrentUser = await currentUserResponse.json()
         setCurrentUser(currentUserData)
+
+        if (currentUserData.permissions.includes('role.manage')) {
+          const [roleCatalog, customerResponse] = await Promise.all([
+            roleRequest<RoleCatalog>(),
+            fetch('/api/customers', { cache: 'no-store' }),
+          ])
+          setCatalog(roleCatalog)
+          if (customerResponse.ok) setCustomers(await customerResponse.json())
+        }
+
+        if (currentUserData.permissions.includes('user.read')) {
+          setUsers(await getUsers())
+        }
       } catch (error) {
         console.error('Failed to load page data:', error)
         setError('Could not load user information.')
@@ -167,6 +149,7 @@ export default function UsersRolesPage() {
         name: inviteName.trim(),
         email,
         role: inviteRole,
+        customerId: inviteRole === 'Customer' ? Number(inviteCustomer) : undefined,
       })
 
       setInviteSuccess(`Invitation successfully sent to ${email}.`)
@@ -174,6 +157,7 @@ export default function UsersRolesPage() {
       setInviteName('')
       setInviteEmail('')
       setInviteRole('Tier1')
+      setInviteCustomer('')
       setShowInviteForm(false)
 
       try {
@@ -196,6 +180,14 @@ export default function UsersRolesPage() {
     }
   }
 
+  if (!loading && !currentUser?.permissions.includes('user.read')) {
+    return <main><p role="alert">{error ?? 'You do not have access to Users & Roles.'}</p></main>
+  }
+
+  if (loading) {
+    return <main><p role="status">Loading users…</p></main>
+  }
+
   return (
     <div
       className={[
@@ -216,10 +208,10 @@ export default function UsersRolesPage() {
           userName={currentUser?.name ?? ''}
           userRole={
             currentUser
-              ? roleLabels[currentUser.role]
+              ? roleLabel(currentUser.role)
               : ''
           }
-          twoFactorEnabled={currentUser?.twoFactor ?? false}
+          twoFactorEnabled={currentUser?.mfaEnabled ?? false}
           sampleData={false}
         />
 
@@ -248,7 +240,7 @@ export default function UsersRolesPage() {
                 </span>
               </div>
 
-              {currentUser?.role === 'Superuser' && (
+              {currentUser?.permissions.includes('user.invite') && (
                 <Button
                   type="button"
                   onClick={toggleInviteForm}
@@ -269,11 +261,11 @@ export default function UsersRolesPage() {
               </p>
             )}
 
+            {accessError && <p role="alert">{accessError}</p>}
+
             {/* USERS TABLE */}
 
-            {loading ? (
-              <p>Loading users...</p>
-            ) : error ? (
+            {error ? (
               <p role="alert">{error}</p>
             ) : (
               <div className={styles.tableWrapper}>
@@ -281,136 +273,149 @@ export default function UsersRolesPage() {
                   <thead>
                     <tr>
                       <th>Name</th>
+                      <th>Email</th>
                       <th>Role</th>
                       <th>Customer access</th>
                       <th>2FA</th>
                       <th>Last sign-in</th>
                       <th>Status</th>
+                      <th>Actions</th>
                     </tr>
                   </thead>
 
                   <tbody>
-                    {users.map(user => (
-                      <tr key={user.id}>
-                        <td className={styles.userName}>
-                          {user.name}
-                        </td>
+                    {users.map(user => {
+                      const protectedUser = user.role === 'Superuser'
+                      const canEdit = currentUser?.permissions.includes('user.update') && (!protectedUser || Boolean(catalog))
+                      const canEditAccess = Boolean(catalog) && !protectedUser
+                      const canDelete = currentUser?.permissions.includes('user.delete') && !protectedUser && currentUser.id !== user.id
 
-                        <td>
-                          {roleLabels[user.role]}
-                        </td>
+                      return (
+                        <tr key={user.id}>
+                          <td className={styles.userName}>
+                            {user.name}
+                          </td>
 
-                        <td>
-                          {user.customerAccess}
-                        </td>
+                          <td>{user.email}</td>
+                          <td>{roleLabel(user.role)}</td>
 
-                        <td>
-                          <span
-                            className={
-                              user.twoFactor
-                                ? styles.activeBadge
-                                : styles.warningBadge
-                            }
-                          >
-                            {user.twoFactor
-                              ? 'Active'
-                              : 'Not set up'}
-                          </span>
-                        </td>
+                          <td>
+                            {user.customerAccess}
+                          </td>
 
-                        <td className={styles.muted}>
-                          {formatLastSignIn(user.lastSignIn)}
-                        </td>
+                          <td>
+                            <span
+                              className={
+                                user.twoFactor
+                                  ? styles.activeBadge
+                                  : styles.warningBadge
+                              }
+                            >
+                              {user.twoFactor
+                                ? 'Active'
+                                : 'Not set up'}
+                            </span>
+                          </td>
 
-                        <td>{user.status}</td>
-                      </tr>
-                    ))}
+                          <td className={styles.muted}>
+                            {formatLastSignIn(user.lastSignIn)}
+                          </td>
+
+                          <td>{user.status}</td>
+                          <td>
+                            {(canEdit || canEditAccess || canDelete) && (
+                              <details className={styles.userActions}>
+                                <summary aria-label={`Actions for ${user.name}`}>⋯</summary>
+                                <div className={styles.userActionOptions}>
+                                  {canEdit && (
+                                    <button type="button" onClick={event => {
+                                      event.currentTarget.closest('details')?.removeAttribute('open')
+                                      setUserAction({ user, action: 'edit' })
+                                    }}>Edit details</button>
+                                  )}
+                                  {canEditAccess && (
+                                    <button type="button" onClick={event => {
+                                      event.currentTarget.closest('details')?.removeAttribute('open')
+                                      void editUserAccess(user)
+                                    }}>Edit role and permissions</button>
+                                  )}
+                                  {canDelete && (
+                                    <button type="button" className={styles.dangerText} onClick={event => {
+                                      event.currentTarget.closest('details')?.removeAttribute('open')
+                                      setUserAction({ user, action: 'delete' })
+                                    }}>Delete user</button>
+                                  )}
+                                </div>
+                              </details>
+                            )}
+                          </td>
+                        </tr>
+                      )
+                    })}
                   </tbody>
                 </table>
               </div>
             )}
           </section>
 
-          {/* ROLES AND PERMISSIONS */}
+          {userAction && (
+            <UserActionDialog {...userAction} onCancel={() => setUserAction(null)} onSaved={updated => {
+              setUsers(current => updated
+                ? current.map(user => user.id === userAction.user.id ? updated : user)
+                : current.filter(user => user.id !== userAction.user.id))
+              setUserAction(null)
+            }} />
+          )}
 
-          <section
-            className={styles.card}
-            aria-labelledby="roles-heading"
-          >
-            <div className={styles.cardHeader}>
-              <div className={styles.cardTitle}>
-                <h2 id="roles-heading">
-                  Roles and permissions
-                </h2>
-
-                <span className={styles.subtitle}>
-                  Superusers can build custom roles
-                </span>
+          {catalog && editor?.mode === 'user' && (
+            <UserDialog title={`Edit role and permissions for ${users.find(user => user.id === editor.target)?.name ?? 'user'}`}>
+              <div className={styles.inviteForm}>
+                <RoleEditor key={editor.target} {...editor}
+                  catalog={catalog} customers={customers} onSaved={refreshAccess} onCancel={() => setEditor(null)} />
               </div>
+            </UserDialog>
+          )}
 
-              <Button type="button">
-                New role
-              </Button>
-            </div>
-
-            <div className={styles.tableWrapper}>
-              <table className={styles.permissionsTable}>
-                <thead>
-                  <tr>
-                    <th>Permission</th>
-
-                    {roles.map(role => (
-                      <th key={role}>
-                        {role}
-                      </th>
+          {catalog && (
+            <section className={styles.card} aria-labelledby="roles-heading">
+              <div className={styles.cardHeader}>
+                <h2 id="roles-heading">Roles and permissions</h2>
+                <Button type="button" onClick={() => setEditor({ mode: 'create', initial: { name: '', permissions: [] } })}>
+                  New role
+                </Button>
+              </div>
+              {editor && editor.mode !== 'user' && (
+                <RoleEditor key={editor.target ?? editor.initial.name} {...editor}
+                  catalog={catalog} onSaved={refreshAccess} onCancel={() => setEditor(null)} />
+              )}
+              <div className={styles.tableWrapper}>
+                <table className={styles.permissionsTable}>
+                  <thead>
+                    <tr><th>Role</th><th>Permissions</th><th>Actions</th></tr>
+                  </thead>
+                  <tbody>
+                    {catalog.roles.map(role => (
+                      <tr key={role.name}>
+                        <td>{roleLabel(role.name)}</td>
+                        <td>{role.permissions.join(', ') || '—'}</td>
+                        <td>{role.name !== 'Superuser' && (
+                          <Button type="button" onClick={() => setEditor({ mode: 'role', initial: role })}>
+                            Edit permissions
+                          </Button>
+                        )}</td>
+                      </tr>
                     ))}
-                  </tr>
-                </thead>
-
-                <tbody>
-                  {permissions.map(permission => (
-                    <tr key={permission.name}>
-                      <td>{permission.name}</td>
-
-                      {permission.roles.map((allowed, index) => (
-                        <td
-                          key={`${permission.name}-${roles[index]}`}
-                        >
-                          <span
-                            className={
-                              allowed
-                                ? styles.allowed
-                                : styles.denied
-                            }
-                          >
-                            {allowed ? '✓' : '–'}
-                          </span>
-                        </td>
-                      ))}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
-            <div className={styles.cardFooter}>
-              <p>
-                Every permission only applies within customers
-                the user has access to (see Customer access).
-              </p>
-
-              <p>
-                * Superusers see customer data only after an
-                access request; every view is logged in the audit log.
-              </p>
-            </div>
-          </section>
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          )}
         </main>
       </div>
 
       {/* INVITE USER MODAL */}
 
-      {showInviteForm && currentUser?.role === 'Superuser' && (
+      {showInviteForm && currentUser?.permissions.includes('user.invite') && (
         <div
           className={styles.modalBackdrop}
           onMouseDown={event => {
@@ -541,7 +546,7 @@ export default function UsersRolesPage() {
                 >
                   {availableRoles.map(role => (
                     <option key={role} value={role}>
-                      {roleLabels[role]}
+                      {roleLabel(role)}
                     </option>
                   ))}
                 </select>
@@ -552,6 +557,17 @@ export default function UsersRolesPage() {
               </div>
 
               {/* ERROR MESSAGE */}
+
+              {inviteRole === 'Customer' && (
+                <label className={styles.inviteField}>
+                  Customer
+                  <select className={styles.inviteInput} required disabled={inviting}
+                    value={inviteCustomer} onChange={event => setInviteCustomer(event.target.value)}>
+                    <option value="">Select a customer</option>
+                    {customers.map(customer => <option key={customer.id} value={customer.id}>{customer.name}</option>)}
+                  </select>
+                </label>
+              )}
 
               {inviteError && (
                 <p

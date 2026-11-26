@@ -1,4 +1,6 @@
+using System.Security.Claims;
 using System.Text.Json.Serialization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
@@ -43,6 +45,25 @@ builder.Services
         options.ExpireTimeSpan = TimeSpan.FromHours(8);
         options.SlidingExpiration = true;
         ConfigureApiCookie(options);
+        options.Events.OnValidatePrincipal = async context =>
+        {
+            var userId = context.Principal?.FindFirstValue(ClaimTypes.NameIdentifier);
+            var authService = context.HttpContext.RequestServices.GetRequiredService<IAuthService>();
+            var user = Guid.TryParse(userId, out var id) ? await authService.GetUserAsync(id) : null;
+
+            if (user is null)
+            {
+                context.RejectPrincipal();
+                return;
+            }
+
+            var identity = new ClaimsIdentity(
+                [new Claim(ClaimTypes.NameIdentifier, user.Id.ToString())],
+                AuthSchemes.Session);
+            identity.AddClaims(Permissions.ForUser(user)
+                .Select(permission => new Claim(Permissions.ClaimType, permission)));
+            context.ReplacePrincipal(new ClaimsPrincipal(identity));
+        };
     })
     .AddCookie(AuthSchemes.MfaPending, options =>
     {
@@ -51,7 +72,20 @@ builder.Services
         options.SlidingExpiration = false;
         ConfigureApiCookie(options);
     });
-builder.Services.AddAuthorization();
+builder.Services.AddAuthorization(options =>
+{
+    options.FallbackPolicy = new AuthorizationPolicyBuilder()
+        .RequireAssertion(_ => false)
+        .Build();
+
+    foreach (var permission in Permissions.All.Append(Permissions.RoleManage))
+    {
+        options.AddPolicy(permission, policy => policy
+            .AddAuthenticationSchemes(AuthSchemes.Session)
+            .RequireAuthenticatedUser()
+            .RequireClaim(Permissions.ClaimType, permission));
+    }
+});
 var allowedOrigins = (builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [])
     .Select(origin => Uri.TryCreate(origin.Trim(), UriKind.Absolute, out var uri)
         ? uri.GetLeftPart(UriPartial.Authority)

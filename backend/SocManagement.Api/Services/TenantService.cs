@@ -56,7 +56,7 @@ public class TenantService : ITenantService
         }
 
         // RRM: alleen medewerkers krijgen KlantToegang.
-        if (user.Role == UserRole.Customer)
+        if (user.Role == nameof(UserRole.Customer))
         {
             return TenantAccessResult.NotAnEmployee;
         }

@@ -158,9 +158,10 @@ public class AuthService : IAuthService
 
     public async Task<User?> GetUserAsync(Guid userId)
     {
-        var user = await _context.Users.FindAsync(userId);
-
-        return user is { Status: UserStatus.Active } ? user : null;
+        return await _context.Users.AsNoTracking()
+            .Include(user => user.AccessRole).ThenInclude(role => role.Permissions)
+            .Include(user => user.DirectPermissions)
+            .FirstOrDefaultAsync(user => user.Id == userId && user.Status == UserStatus.Active);
     }
 
     private async Task<string?> ReadMfaSecretAsync(User user)

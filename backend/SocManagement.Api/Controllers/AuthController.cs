@@ -14,10 +14,12 @@ namespace SocManagement.Api.Controllers;
 public class AuthController : ControllerBase
 {
     private readonly IAuthService _authService;
+    private readonly ITenantService _tenantService;
 
-    public AuthController(IAuthService authService)
+    public AuthController(IAuthService authService, ITenantService tenantService)
     {
         _authService = authService;
+        _tenantService = tenantService;
     }
 
     [HttpPost("login")]
@@ -91,6 +93,10 @@ public class AuthController : ControllerBase
             Name = user.Name,
             Email = user.Email,
             Role = user.Role,
+            Permissions = Permissions.ForUser(user),
+            CustomerAccessCount = user.CustomerId.HasValue
+                ? 1
+                : (await _tenantService.GetAllowedCustomerIdsAsync(user.Id)).Count,
             MfaEnabled = user.MfaEnabled
         });
     }
@@ -111,8 +117,7 @@ public class AuthController : ControllerBase
         {
             new(ClaimTypes.NameIdentifier, user.Id.ToString()),
             new(ClaimTypes.Name, user.Name),
-            new(ClaimTypes.Email, user.Email),
-            new(ClaimTypes.Role, user.Role.ToString())
+            new(ClaimTypes.Email, user.Email)
         };
 
         var principal = new ClaimsPrincipal(new ClaimsIdentity(claims, AuthSchemes.Session));

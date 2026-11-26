@@ -1,4 +1,3 @@
-using SocManagement.Api.Enums;
 
 namespace SocManagement.Api.DTOs;
 
@@ -10,7 +9,10 @@ public class CurrentUserDto
 
     public string Email { get; set; } = string.Empty;
 
-    public UserRole Role { get; set; }
+    public string Role { get; set; } = string.Empty;
+    public IReadOnlyList<string> Permissions { get; set; } = [];
+
+    public int CustomerAccessCount { get; set; }
 
     public bool MfaEnabled { get; set; }
 }

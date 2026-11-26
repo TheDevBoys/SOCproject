@@ -10,7 +10,7 @@ public class UserDto
 
     public string Email { get; set; } = string.Empty;
 
-    public UserRole Role { get; set; }
+    public string Role { get; set; } = string.Empty;
 
     public string CustomerAccess { get; set; } = string.Empty;
 

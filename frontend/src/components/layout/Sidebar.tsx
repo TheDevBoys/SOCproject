@@ -2,10 +2,11 @@
 
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
+import { useAuth } from '../auth/AuthProvider'
 import Icon, { type IconName } from '../ui/Icon'
 import styles from './Sidebar.module.css'
 
-const groups: { title: string; items: { label: string; roles: string; icon: IconName; href?: string }[] }[] = [
+const groups: { title: string; items: { label: string; roles: string; permission?: string; icon: IconName; href?: string }[] }[] = [
   {
     title: 'Workspace',
     items: [
@@ -18,7 +19,7 @@ const groups: { title: string; items: { label: string; roles: string; icon: Icon
     title: 'Management',
     items: [
       { label: 'Customers', roles: 'account manager, superuser', icon: 'building', href: '/customers' },
-      { label: 'Users & roles', roles: 'superuser', icon: 'users', href: '/users-roles' },
+      { label: 'Users & roles', roles: 'user.read', permission: 'user.read', icon: 'users', href: '/users-roles' },
       { label: 'Customer access', roles: 'superuser', icon: 'key', href: '/customer-access' },
       { label: 'Retention policy', roles: 'superuser', icon: 'clock', href: '/retention-policy' },
       { label: 'Audit log', roles: 'Tier 3, superuser', icon: 'list', href: '/audit-log' },
@@ -37,6 +38,7 @@ type SidebarProps = {
 
 export default function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
   const pathname = usePathname()
+  const { user } = useAuth()
   const accountActive = pathname === '/account' || pathname.startsWith('/account/')
 
   return (
@@ -62,7 +64,7 @@ export default function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
           <section key={group.title} className={styles.group} aria-label={group.title}>
             <h2>{group.title}</h2>
             <ul>
-              {group.items.map(item => {
+              {group.items.filter(item => !item.permission || user?.permissions.includes(item.permission)).map(item => {
                 const label = (
                   <>
                     <Icon name={item.icon} />
@@ -94,7 +96,7 @@ export default function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
         </Link>
       </nav>
       <p className={styles.note}>
-        Brackets show which roles can see each item. For all other roles it is locked in code.
+        Brackets show the intended roles or required permission.
         Superusers see customer data only after an access request.
       </p>
     </aside>

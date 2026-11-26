@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace SocManagement.Api.Controllers;
@@ -7,6 +8,7 @@ namespace SocManagement.Api.Controllers;
 public class HealthController : ControllerBase
 {
     [HttpGet]
+    [AllowAnonymous]
     public IActionResult Get()
     {
         return Ok(new { status = "ok" });

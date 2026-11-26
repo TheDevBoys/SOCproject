@@ -4,11 +4,8 @@ obj/
 **/bin/
 **/obj/
 /frontend/frontend/
-<<<<<<< HEAD
-=======
 AGENTS.md
 .next/
->>>>>>> dc4d1cce8362f85aa93ddc2436332e04c857a67a
 # Node
 node_modules/
 
@@ -20,10 +17,6 @@ node_modules/
 
 #Azure CLI
 deploy.zip
-<<<<<<< HEAD
-publish/
-=======
 publish/
 
 **/.env.local
->>>>>>> dc4d1cce8362f85aa93ddc2436332e04c857a67a

@@ -462,3 +462,50 @@
     padding: 16px;
   }
 }
+.userDialog {
+  padding: 0;
+  color: #202731;
+}
+
+.userDialog::backdrop {
+  background: rgb(32 39 49 / 55%);
+}
+
+.userActions summary {
+  cursor: pointer;
+  width: fit-content;
+  padding: 4px 10px;
+  border: 1px solid #d7dee8;
+  border-radius: 5px;
+  list-style: none;
+  font-weight: 700;
+}
+
+.userActions summary::-webkit-details-marker {
+  display: none;
+}
+
+.userActionOptions {
+  display: grid;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.userActionOptions button {
+  padding: 5px 8px;
+  text-align: left;
+  background: #fff;
+  border: 1px solid #d7dee8;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.userActionOptions .dangerText {
+  color: #a52222;
+}
+
+.userDialog .dangerButton {
+  background: #a52222;
+  border-color: #a52222;
+  color: #fff;
+}
