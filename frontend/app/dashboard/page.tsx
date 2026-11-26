@@ -34,12 +34,16 @@ export default function HomePage() {
         <div className={styles.dashboardTable}>
           <div className={styles.table}>
             <h2>Cases at SLA risk</h2>
+            <div className={styles.card}>
+            </div>
           </div>
         </div>
 
         <div className={styles.dashboardCharts}>
           <div className={styles.chart}>
             <h2>Incoming Alerts, last 24 hours</h2>
+            <div className={styles.card}>
+            </div>
           </div>
       </div>
       </ul>
@@ -48,12 +52,16 @@ export default function HomePage() {
         <div className={styles.dashboardCharts}>
           <div className={styles.chart}>
             <h3>Open work per tier</h3>
+            <div className={styles.card}>
+            </div>
           </div>
         </div>
 
         <div className={styles.dashboardCharts}>
           <div className={styles.chart}>
             <h3>Open alerts by source</h3>
+            <div className={styles.card}>
+            </div>
           </div>
       </div>
       </ul>
