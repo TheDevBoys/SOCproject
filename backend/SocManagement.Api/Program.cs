@@ -24,6 +24,7 @@ builder.Services.AddDbContext<SocDbContext>(options =>
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
 builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<ITenantService, TenantService>();
 builder.Services.AddScoped<IMfaService, MfaService>();
 
 builder.Services
