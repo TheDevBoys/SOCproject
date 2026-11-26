@@ -1,3 +1,5 @@
+import DailyAlertsChart from '../../src/components/dashboard/DailyAlertsCharts';
+import CaseTable from '../../src/components/dashboard/CaseTable';
 import styles from '../account/page.module.css'
 
 export const metadata = {
@@ -28,39 +30,26 @@ export default function HomePage() {
         <div className={styles.card}>
           <h2>Average run time</h2>
         </div>
-      </ul>
+        </ul>
 
-      <ul>
-        <div className={styles.dashboardTable}>
-          <div className={styles.table}>
-            <h2>Cases at SLA risk</h2>
-            <div className={styles.card}>
-            </div>
+          <div className={styles.reportOverview}> 
+              <CaseTable />
+              <DailyAlertsChart />
           </div>
-        </div>
-
-        <div className={styles.dashboardCharts}>
-          <div className={styles.chart}>
-            <h2>Incoming Alerts, last 24 hours</h2>
-            <div className={styles.card}>
-            </div>
-          </div>
-      </div>
-      </ul>
-
+          
       <ul>
         <div className={styles.dashboardCharts}>
-          <div className={styles.chart}>
+          <div className={styles.card}>
             <h3>Open work per tier</h3>
-            <div className={styles.card}>
+            <div className={styles.chart}>
             </div>
           </div>
         </div>
 
         <div className={styles.dashboardCharts}>
-          <div className={styles.chart}>
+          <div className={styles.card}>
             <h3>Open alerts by source</h3>
-            <div className={styles.card}>
+            <div className={styles.chart}>
             </div>
           </div>
       </div>
