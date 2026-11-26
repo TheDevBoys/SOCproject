@@ -8,4 +8,8 @@ public class InvitationInvalidException()
     : Exception("The invitation is invalid, expired or already used.");
 
 public class EmailDeliveryException(Exception innerException)
-    : Exception("The invitation email could not be sent. No account was created.", innerException);
+    : Exception(innerException is EmailProviderException
+        ? $"{innerException.Message} No account was created."
+        : "The invitation email could not be sent. Check the backend logs for the cause. No account was created.", innerException);
+
+public class EmailProviderException(string message) : Exception(message);

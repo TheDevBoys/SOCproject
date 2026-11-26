@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Encodings.Web;
+using System.Text.Json;
 
 namespace SocManagement.Api.Services;
 
@@ -55,9 +56,13 @@ public class EmailService : IEmailService
         string subject,
         string htmlBody)
     {
-        var apiKey = _configuration["Resend:ApiKey"];
-        var fromEmail = _configuration["Resend:FromEmail"];
+        var apiKey = _configuration["Resend:ApiKey"]?.Trim();
+        var fromEmail = _configuration["Resend:FromEmail"]?.Trim();
 
+        if (string.IsNullOrWhiteSpace(apiKey) || string.IsNullOrWhiteSpace(fromEmail))
+        {
+            throw new EmailProviderException("Email sending is not configured. Check Resend:ApiKey and Resend:FromEmail on the backend.");
+        }
 
         var payload = new
         {
@@ -81,14 +86,39 @@ public class EmailService : IEmailService
 
         if (!response.IsSuccessStatusCode)
         {
+            string? providerMessage = null;
+
+            try
+            {
+                using var error = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+                if (error.RootElement.ValueKind == JsonValueKind.Object &&
+                    error.RootElement.TryGetProperty("message", out var message) &&
+                    message.ValueKind == JsonValueKind.String)
+                {
+                    providerMessage = message.GetString()?.Replace(apiKey, "[redacted]");
+                }
+            }
+            catch (JsonException)
+            {
+                providerMessage = "Resend returned a non-JSON error response.";
+            }
+
             _logger.LogError(
-                "Failed to send email. Status: {StatusCode}",
-                response.StatusCode
+                "Failed to send email. Status: {StatusCode}. Resend reason: {ProviderMessage}",
+                (int)response.StatusCode,
+                providerMessage
             );
 
-            throw new HttpRequestException(
-                $"Resend failed with status code {(int)response.StatusCode}."
-            );
+            var explanation = response.StatusCode switch
+            {
+                HttpStatusCode.Unauthorized => "Check the Resend API key on the backend.",
+                HttpStatusCode.Forbidden => "Check the verified sender domain, API key permissions and test-recipient restrictions in Resend.",
+                HttpStatusCode.BadRequest or HttpStatusCode.UnprocessableEntity => "Check the sender and recipient addresses and the Resend error in the backend logs.",
+                HttpStatusCode.TooManyRequests => "The Resend sending limit was reached. Try again later and check your Resend limits.",
+                _ => "Check the Resend error in the backend logs before trying again."
+            };
+
+            throw new EmailProviderException($"Resend rejected the email (HTTP {(int)response.StatusCode}). {explanation}");
         }
 
         _logger.LogInformation("Email accepted by Resend.");
