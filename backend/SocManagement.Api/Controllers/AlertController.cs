@@ -148,6 +148,79 @@ public class AlertController : ControllerBase
 
         return Ok(result);
     }
+        // PATCH api/alerts/5/link
+    // Koppelt een alert aan een ticket dat al bestaat.
+    // Handig als meerdere alerts bij dezelfde aanval horen.
+    [HttpPatch("{id:int}/link")]
+    public async Task<ActionResult<AlertDto>> LinkToCase(int id, LinkAlertDto dto)
+    {
+        var alert = await _context.Alerts.FindAsync(id);
 
+        if (alert == null)
+        {
+            return NotFound();
+        }
+
+        if (alert.TicketId != null)
+        {
+            return Conflict("Alert is already linked to a case.");
+        }
+
+        var ticket = await _context.Tickets.FindAsync(dto.TicketId);
+
+        if (ticket == null)
+        {
+            return BadRequest("Ticket does not exist.");
+        }
+
+        // Belangrijk voor de scheiding tussen klanten:
+        // een alert van klant A mag nooit aan een ticket van klant B hangen.
+        if (ticket.CustomerId != alert.CustomerId)
+        {
+            return BadRequest("Alert and ticket belong to different customers.");
+        }
+
+        alert.TicketId = ticket.Id;
+        alert.Status = "Linked";
+
+        await _context.SaveChangesAsync();
+
+        var result = await _context.Alerts
+            .Where(a => a.Id == alert.Id)
+            .Select(ToDto)
+            .FirstAsync();
+
+        return Ok(result);
+    }
+
+        // PATCH api/alerts/5/false-positive
+    // Sluit een alert af als vals alarm. Er komt geen ticket.
+    [HttpPatch("{id:int}/false-positive")]
+    public async Task<ActionResult<AlertDto>> CloseAsFalsePositive(int id)
+    {
+        var alert = await _context.Alerts.FindAsync(id);
+
+        if (alert == null)
+        {
+            return NotFound();
+        }
+
+        // Hangt hij al aan een case? Dan is het geen vals alarm meer.
+        if (alert.TicketId != null)
+        {
+            return Conflict("Alert is linked to a case and cannot be closed as false positive.");
+        }
+
+        alert.Status = "FalsePositive";
+
+        await _context.SaveChangesAsync();
+
+        var result = await _context.Alerts
+            .Where(a => a.Id == alert.Id)
+            .Select(ToDto)
+            .FirstAsync();
+
+        return Ok(result);
+    }
 }
 
