@@ -18,23 +18,34 @@ public class UserService : IUserService
         _passwordHasher = passwordHasher;
     }
 
-    public async Task<List<UserDto>> GetAllAsync()
+        public async Task<List<UserDto>> GetAllAsync()
     {
         var users = await _context.Users
             .AsNoTracking()
             .OrderBy(u => u.Name)
+            .Select(u => new
+            {
+                User = u,
+                CustomerCount = u.TenantAccesses.Count
+            })
             .ToListAsync();
 
-        return users.Select(ToDto).ToList();
+        return users.Select(x => ToDto(x.User, x.CustomerCount)).ToList();
     }
 
-    public async Task<UserDto?> GetByIdAsync(Guid id)
+        public async Task<UserDto?> GetByIdAsync(Guid id)
     {
-        var user = await _context.Users
+        var result = await _context.Users
             .AsNoTracking()
-            .FirstOrDefaultAsync(u => u.Id == id);
+            .Where(u => u.Id == id)
+            .Select(u => new
+            {
+                User = u,
+                CustomerCount = u.TenantAccesses.Count
+            })
+            .FirstOrDefaultAsync();
 
-        return user == null ? null : ToDto(user);
+        return result == null ? null : ToDto(result.User, result.CustomerCount);
     }
 
     public async Task<UserDto?> CreateAsync(CreateUserDto request)
@@ -61,7 +72,7 @@ public class UserService : IUserService
         _context.Users.Add(user);
         await _context.SaveChangesAsync();
 
-        return ToDto(user);
+        return ToDto(user, 0);
     }
 
     public async Task<UserUpdateResult> UpdateAsync(Guid id, UpdateUserDto request)
@@ -111,13 +122,13 @@ public class UserService : IUserService
     private Task<bool> EmailInUseAsync(string email) =>
         _context.Users.AnyAsync(u => u.Email == email);
 
-    private static UserDto ToDto(User user) => new()
+        private static UserDto ToDto(User user, int customerCount) => new()
     {
         Id = user.Id,
         Name = user.Name,
         Email = user.Email,
         Role = user.Role,
-        CustomerAccess = user.CustomerAccess,
+        CustomerAccess = customerCount == 1 ? "1 customer" : $"{customerCount} customers",
         TwoFactor = user.MfaEnabled,
         LastSignIn = user.LastSignIn,
         Status = user.Status
