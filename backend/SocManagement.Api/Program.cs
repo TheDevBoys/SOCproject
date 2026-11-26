@@ -1,5 +1,6 @@
 using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
 using SocManagement.Api.Auth;
 using SocManagement.Api.Models;
@@ -17,6 +18,10 @@ builder.Services.AddControllers()
     });
 
 builder.Services.AddSwaggerGen();
+
+builder.Services.AddDataProtection()
+    .SetApplicationName("SocManagement")
+    .PersistKeysToDbContext<SocDbContext>();
 builder.Services.AddDbContext<SocDbContext>(options =>
     options.UseSqlServer(
         builder.Configuration.GetConnectionString("SocDb"),
@@ -24,7 +29,11 @@ builder.Services.AddDbContext<SocDbContext>(options =>
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
 builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<ITenantService, TenantService>();
 builder.Services.AddScoped<IMfaService, MfaService>();
+builder.Services.AddScoped<IInvitationService, InvitationService>();
+builder.Services.AddHttpClient<IEmailService, EmailService>();
+
 
 builder.Services
     .AddAuthentication(AuthSchemes.Session)
