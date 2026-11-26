@@ -170,6 +170,24 @@ namespace SocManagement.Api.Migrations
                     b.ToTable("Slas");
                 });
 
+            modelBuilder.Entity("SocManagement.Api.Models.TenantAccess", b =>
+                {
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("CustomerId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("GrantedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("UserId", "CustomerId");
+
+                    b.HasIndex("CustomerId");
+
+                    b.ToTable("TenantAccesses");
+                });
+
             modelBuilder.Entity("SocManagement.Api.Models.Ticket", b =>
                 {
                     b.Property<int>("Id")
@@ -260,6 +278,9 @@ namespace SocManagement.Api.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<int?>("CustomerId")
+                        .HasColumnType("int");
+
                     b.Property<string>("Email")
                         .IsRequired()
                         .HasMaxLength(254)
@@ -304,6 +325,8 @@ namespace SocManagement.Api.Migrations
                         .HasColumnType("nvarchar(20)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("CustomerId");
 
                     b.HasIndex("Email")
                         .IsUnique();
@@ -391,6 +414,25 @@ namespace SocManagement.Api.Migrations
                     b.Navigation("Ticket");
                 });
 
+            modelBuilder.Entity("SocManagement.Api.Models.TenantAccess", b =>
+                {
+                    b.HasOne("SocManagement.Api.Models.Customer", "Customer")
+                        .WithMany("TenantAccesses")
+                        .HasForeignKey("CustomerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("SocManagement.Api.Models.User", "User")
+                        .WithMany("TenantAccesses")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Customer");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("SocManagement.Api.Models.Ticket", b =>
                 {
                     b.HasOne("SocManagement.Api.Models.User", "AssignedUser")
@@ -433,6 +475,16 @@ namespace SocManagement.Api.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("SocManagement.Api.Models.User", b =>
+                {
+                    b.HasOne("SocManagement.Api.Models.Customer", "Customer")
+                        .WithMany("Users")
+                        .HasForeignKey("CustomerId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Customer");
+                });
+
             modelBuilder.Entity("SocManagement.Api.Models.UserInvitation", b =>
                 {
                     b.HasOne("SocManagement.Api.Models.User", "User")
@@ -448,7 +500,11 @@ namespace SocManagement.Api.Migrations
                 {
                     b.Navigation("Alerts");
 
+                    b.Navigation("TenantAccesses");
+
                     b.Navigation("Tickets");
+
+                    b.Navigation("Users");
                 });
 
             modelBuilder.Entity("SocManagement.Api.Models.RetentionPolicy", b =>
@@ -465,6 +521,11 @@ namespace SocManagement.Api.Migrations
                     b.Navigation("History");
 
                     b.Navigation("Sla");
+                });
+
+            modelBuilder.Entity("SocManagement.Api.Models.User", b =>
+                {
+                    b.Navigation("TenantAccesses");
                 });
 #pragma warning restore 612, 618
         }
