@@ -54,9 +54,9 @@ public class UsersController : ControllerBase
     public async Task<ActionResult<UserDto>> CreateUser(
         [FromBody] CreateUserDto request)
     {
-        var user = await _userService.CreateAsync(request);
+        var (result, user) = await _userService.CreateAsync(request);
 
-        if (user == null)
+        if (result == UserSaveResult.EmailTaken)
         {
             return Conflict(new
             {
@@ -64,9 +64,17 @@ public class UsersController : ControllerBase
             });
         }
 
+        if (result == UserSaveResult.InvalidCustomerLink)
+        {
+            return BadRequest(new
+            {
+                message = "Role Customer requires an existing customerId; other roles cannot have a customerId."
+            });
+        }
+
         return CreatedAtAction(
             nameof(GetUser),
-            new { id = user.Id },
+            new { id = user!.Id },
             user
         );
     }
@@ -81,13 +89,21 @@ public class UsersController : ControllerBase
 
         return result switch
         {
-            UserUpdateResult.NotFound => NotFound(new
+            UserSaveResult.NotFound => NotFound(new
             {
                 message = "User not found."
             }),
-            UserUpdateResult.EmailTaken => Conflict(new
+            UserSaveResult.EmailTaken => Conflict(new
             {
                 message = "A user with this email address already exists."
+            }),
+            UserSaveResult.InvalidCustomerLink => BadRequest(new
+            {
+                message = "Role Customer requires an existing customerId; other roles cannot have a customerId."
+            }),
+            UserSaveResult.HasTenantAccess => Conflict(new
+            {
+                message = "Remove this user's customer access before changing the role to Customer."
             }),
             _ => Ok(new
             {

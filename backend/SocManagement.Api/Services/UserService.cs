@@ -48,13 +48,18 @@ public class UserService : IUserService
         return result == null ? null : ToDto(result.User, result.CustomerCount);
     }
 
-    public async Task<UserDto?> CreateAsync(CreateUserDto request)
+    public async Task<(UserSaveResult Result, UserDto? User)> CreateAsync(CreateUserDto request)
     {
         var email = request.Email.Trim();
 
         if (await EmailInUseAsync(email))
         {
-            return null;
+            return (UserSaveResult.EmailTaken, null);
+        }
+
+        if (!await IsValidCustomerLinkAsync(request.Role, request.CustomerId))
+        {
+            return (UserSaveResult.InvalidCustomerLink, null);
         }
 
         var user = new User
@@ -63,6 +68,7 @@ public class UserService : IUserService
             Name = request.Name.Trim(),
             Email = email,
             Role = request.Role,
+            CustomerId = request.CustomerId,
             MfaEnabled = true,
             Status = UserStatus.Active
         };
@@ -72,16 +78,16 @@ public class UserService : IUserService
         _context.Users.Add(user);
         await _context.SaveChangesAsync();
 
-        return ToDto(user, 0);
+        return (UserSaveResult.Saved, ToDto(user, 0));
     }
 
-    public async Task<UserUpdateResult> UpdateAsync(Guid id, UpdateUserDto request)
+    public async Task<UserSaveResult> UpdateAsync(Guid id, UpdateUserDto request)
     {
         var user = await _context.Users.FindAsync(id);
 
         if (user == null)
         {
-            return UserUpdateResult.NotFound;
+            return UserSaveResult.NotFound;
         }
 
         var email = request.Email.Trim();
@@ -89,19 +95,36 @@ public class UserService : IUserService
         if (!string.Equals(user.Email, email, StringComparison.OrdinalIgnoreCase) &&
             await EmailInUseAsync(email))
         {
-            return UserUpdateResult.EmailTaken;
+            return UserSaveResult.EmailTaken;
+        }
+
+        var newRole = request.Role ?? user.Role;
+
+        // Klantgebruiker houdt zijn klant als er geen nieuwe wordt meegestuurd;
+        // bij een medewerkersrol wordt CustomerId leeg (tenzij er foutief een is meegestuurd).
+        var newCustomerId = newRole == UserRole.Customer
+            ? request.CustomerId ?? user.CustomerId
+            : request.CustomerId;
+
+        if (!await IsValidCustomerLinkAsync(newRole, newCustomerId))
+        {
+            return UserSaveResult.InvalidCustomerLink;
+        }
+
+        // RRM: klantgebruikers krijgen geen KlantToegang.
+        if (newRole == UserRole.Customer &&
+            await _context.TenantAccesses.AnyAsync(t => t.UserId == id))
+        {
+            return UserSaveResult.HasTenantAccess;
         }
 
         user.Email = email;
-
-        if (request.Role.HasValue)
-        {
-            user.Role = request.Role.Value;
-        }
+        user.Role = newRole;
+        user.CustomerId = newCustomerId;
 
         await _context.SaveChangesAsync();
 
-        return UserUpdateResult.Updated;
+        return UserSaveResult.Saved;
     }
 
     public async Task<bool> DeleteAsync(Guid id)
@@ -122,6 +145,18 @@ public class UserService : IUserService
     private Task<bool> EmailInUseAsync(string email) =>
         _context.Users.AnyAsync(u => u.Email == email);
 
+    // Rol Customer => moet bij een bestaande klant horen; andere rollen => geen klant.
+    private async Task<bool> IsValidCustomerLinkAsync(UserRole role, int? customerId)
+    {
+        if (role == UserRole.Customer)
+        {
+            return customerId.HasValue &&
+                   await _context.Customers.AnyAsync(c => c.Id == customerId.Value);
+        }
+
+        return customerId == null;
+    }
+
         private static UserDto ToDto(User user, int customerCount) => new()
     {
         Id = user.Id,
@@ -129,6 +164,7 @@ public class UserService : IUserService
         Email = user.Email,
         Role = user.Role,
         CustomerAccess = customerCount == 1 ? "1 customer" : $"{customerCount} customers",
+        CustomerId = user.CustomerId,
         TwoFactor = user.MfaEnabled,
         LastSignIn = user.LastSignIn,
         Status = user.Status
