@@ -7,8 +7,7 @@ namespace SocManagement.Api.Data;
 // geen Guid.NewGuid() of DateTime.Now, anders ziet EF bij elke migratie "nieuwe" data.
 public static class SeedUsers
 {
-    // Eén vaste hash voor alle testgebruikers (PasswordHasher, V3-formaat).
-    // Het bijbehorende testwachtwoord staat NIET in Git.
+
     private const string TestPasswordHash =
         "AQAAAAIAAYagAAAAEMI61lHn1YCfav7Eeo0QX8LrYAJnScraLLCt5t44psyOYf1Vi2jrJfele0pjqcufgA==";
 
