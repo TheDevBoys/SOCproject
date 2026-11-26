@@ -5,6 +5,7 @@ using SocManagement.Api.DTOs;
 using SocManagement.Api.Models;
 using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims; // nodig om de ingelogde gebruikers te lezen.
+using System.Linq.Expressions; // nodig voor Expression
 
 namespace SocManagement.Api.Controllers;
 
@@ -30,7 +31,7 @@ public class TicketsController : ControllerBase
     public async Task<ActionResult<List<TicketDto>>> GetTickets()
     {
         var tickets = await _context.Tickets // varaiable aanmaken waar bij _context.Tickets de tabel tickets uit de db haalt.
-        .Select(t => ToDto(t))
+        .Select(ToDto)
         .ToListAsync();// voert de query uit en zet het resultaat in een lijst.
         return Ok(tickets);// returnt de lijst met tickets in een ok response. dankzijn ActionResult<list..
     }
@@ -38,7 +39,7 @@ public class TicketsController : ControllerBase
     public async  Task<ActionResult<TicketDto>> GetTicket(int id){
         var ticket = await _context.Tickets
             .Where(t => t.Id == id) // where zoekt naar de ticket waar id gelijk is aan id
-            .Select(t => ToDto(t)) // select zet de ticket om naar ticket dto
+            .Select(ToDto) // select zet de ticket om naar ticket dto
             .FirstOrDefaultAsync(); // geef het eerste resultaat of null als er geen ticket bestaat
 
         if(ticket == null)
@@ -93,7 +94,7 @@ public class TicketsController : ControllerBase
 
         await _context.SaveChangesAsync();// savechangesasync slaat het echt op in de database daarna heeft ticket.id de waarde die de database heeft gekozen.
 
-        var result = ToDto(ticket);
+        var result = await GetDtoAsync(ticket.Id);
         // CreatedAtAction = statuscode 201 (aangemaakt) en in de header
         // staat de URL van het nieuwe ticket (verwijst naar GetTicket).
         return CreatedAtAction(nameof(GetTicket), new { id = ticket.Id }, result);
@@ -130,7 +131,7 @@ public class TicketsController : ControllerBase
         await _context.SaveChangesAsync();// slaat alles ineen keer op.
 
         // nu geven de aangepast dto terug dus de 2e ronden van de dto waar die na de database weer na de model word terug gestuurd.
-        return Ok(ToDto(ticket));
+        return Ok(await GetDtoAsync(ticket.Id));
     }
     [HttpPatch("{id:int}/assign")]
     public async Task<ActionResult<TicketDto>> AssignTicket(int id, AssignTicketDto dto)
@@ -173,27 +174,83 @@ public class TicketsController : ControllerBase
         await _context.SaveChangesAsync();
 
          // Geef het bijgewerkte ticket terug (200).
-        return Ok(ToDto(ticket));
+        return Ok(await GetDtoAsync(ticket.Id));
     }
 
-    // Hulpmethode: zet een Ticket (model) om naar een TicketDto.
-    // private = alleen deze controller gebruikt hem.
-    // static = hij heeft niets van de controller nodig (geen _context),
-    //          alleen het ticket dat je meegeeft.
-    // Moet er later een veld bij? Dan pas je alleen deze methode aan.
-    private static TicketDto ToDto(Ticket ticket)
+    // Omschrijving hoe je van een Ticket een TicketDto maakt.
+    // Expression = EF kan dit vertalen naar SQL, met de JOINs erbij.
+    // Daarom kunnen we hier ook velden uit andere tabellen gebruiken.
+    // Moet er later een veld bij? Dan pas je alleen dit aan.
+    private static readonly Expression<Func<Ticket, TicketDto>> ToDto = t => new TicketDto
     {
-        return new TicketDto
+        Id = t.Id,
+        Title = t.Title,
+        Description = t.Description,
+        Status = t.Status,
+        Severity = t.Severity,
+        Priority = t.Priority,
+        CreatedAt = t.CreatedAt,
+        CustomerId = t.CustomerId,
+        AssignedUserId = t.AssignedUserId,
+
+        // Via de navigation property naar de tabel Customers.
+        CustomerName = t.Customer.Name,
+
+        // Niet toegewezen? Dan null, anders de naam van de gebruiker.
+        AssignedUserName = t.AssignedUser != null ? t.AssignedUser.Name : null,
+
+        // Geen SLA? Dan null, anders de deadline.
+        SlaDeadline = t.Sla != null ? t.Sla.Deadline : null,
+
+        // Count = tel hoeveel alerts er in de lijst zitten.
+        AlertCount = t.Alerts.Count,
+
+        // Max = de nieuwste tijd uit de geschiedenis.
+        // (DateTime?) zorgt dat het null mag zijn als er geen geschiedenis is.
+        // ?? = "als links null is, gebruik dan rechts".
+        LastUpdated = t.History.Max(h => (DateTime?)h.Timestamp) ?? t.CreatedAt
+    };
+
+    // Haalt één ticket op als TicketDto, met alle velden uit de andere tabellen.
+    // Dit gebruiken we na het opslaan in Create, UpdateStatus en AssignTicket.
+    // Niet static, want hij heeft _context nodig.
+    private async Task<TicketDto> GetDtoAsync(int id)
+    {
+        return await _context.Tickets
+            .Where(t => t.Id == id)
+            .Select(ToDto)
+            .FirstAsync(); // First = het ticket bestaat zeker, want we hebben het net opgeslagen
+    }
+    [HttpGet("{id:int}/history")]
+    public async Task<ActionResult<List<TicketHistoryDto>>> GetTicketHistory(int id)// <list< gebruiken als we meerdere objecten willen terug zien.
+    {
+        var ticketExists = await _context.Tickets.AnyAsync(t => t.Id == id);
+
+        if (!ticketExists)
         {
-            Id = ticket.Id,
-            Title = ticket.Title,
-            Description = ticket.Description,
-            Status = ticket.Status,
-            Severity = ticket.Severity,
-            Priority = ticket.Priority,
-            CreatedAt = ticket.CreatedAt,
-            CustomerId = ticket.CustomerId,
-            AssignedUserId = ticket.AssignedUserId
-        };
+            return NotFound();
+        }
+
+         var history = await _context.TicketHistories
+            // Alleen de regels van dit ticket.
+            .Where(h => h.TicketId == id)
+            // Nieuwste bovenaan. Descending = van groot naar klein.
+            .OrderByDescending(h => h.Timestamp)
+            // Hier koppel je de DTO aan de data (links DTO, rechts model).
+            .Select(h => new TicketHistoryDto
+            {
+                Id = h.Id,
+                Action = h.Action,
+                Timestamp = h.Timestamp,
+                UserId = h.UserId,
+                // Via de navigation property User naar de tabel Users.
+                // EF maakt hier zelf een JOIN van.
+                UserName = h.User.Name
+            })
+            // Voer de query uit en zet het resultaat in een lijst.
+            .ToListAsync();
+
+        // 200 met de lijst als JSON.
+        return Ok(history);
     }
 }
