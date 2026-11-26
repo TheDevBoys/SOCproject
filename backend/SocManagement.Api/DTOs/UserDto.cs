@@ -14,6 +14,8 @@ public class UserDto
 
     public string CustomerAccess { get; set; } = string.Empty;
 
+    public int? CustomerId { get; set; }
+
     public bool TwoFactor { get; set; }
 
     public DateTime? LastSignIn { get; set; }

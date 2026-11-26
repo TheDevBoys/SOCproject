@@ -1,25 +1,4 @@
-.card {
-  width: 100%;
-  max-width: 382px;
-  padding: 32px 30px;
-  border: 1px solid #d7dee8;
-  border-radius: 8px;
-  background: #fff;
-
-  & h2 {
-    margin: 0 0 6px;
-    font-size: 22px;
-    line-height: 1.35;
-    font-weight: 650;
-  }
-}
-
-.description {
-  margin: 0 0 18px;
-  color: #647184;
-  font-size: 12px;
-  line-height: 1.6;
-}
+/* Only what is specific to the sign-in form. The card comes from AuthCard. */
 
 .fields {
   display: grid;
@@ -46,20 +25,5 @@
   &:focus-visible {
     outline: 2px solid #4264e8;
     outline-offset: 4px;
-  }
-}
-
-.note {
-  margin: 16px 0 0;
-  padding-top: 16px;
-  border-top: 1px solid #e8edf3;
-  color: #647184;
-  font-size: 12px;
-  line-height: 1.6;
-}
-
-@media (max-width: 400px) {
-  .card {
-    padding: 26px 22px;
   }
 }
