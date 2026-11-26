@@ -29,4 +29,13 @@ public class User
     public UserStatus Status { get; set; }
 
     public string CustomerAccess { get; set; } = string.Empty;
+
+    // Klanten waartoe deze gebruiker toegang heeft (KlantToegang).
+    public List<TenantAccess> TenantAccesses { get; set; } = new();
+
+    // Alleen voor klantgebruikers (rol Customer): bij welke klant hoort dit account.
+    // Medewerkers hebben hier null; hun toegang loopt via TenantAccesses.
+    public int? CustomerId { get; set; }
+
+    public Customer? Customer { get; set; }
 }

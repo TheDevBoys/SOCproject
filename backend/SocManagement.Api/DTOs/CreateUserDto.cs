@@ -20,4 +20,7 @@ public class CreateUserDto
     [Required]
     [EnumDataType(typeof(UserRole))]
     public UserRole Role { get; set; }
+
+    // Verplicht bij rol Customer, leeg bij alle andere rollen.
+    public int? CustomerId { get; set; }
 }

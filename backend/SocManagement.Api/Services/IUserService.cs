@@ -8,16 +8,18 @@ public interface IUserService
 
     Task<UserDto?> GetByIdAsync(Guid id);
 
-    Task<UserDto?> CreateAsync(CreateUserDto request);
+    Task<(UserSaveResult Result, UserDto? User)> CreateAsync(CreateUserDto request);
 
-    Task<UserUpdateResult> UpdateAsync(Guid id, UpdateUserDto request);
+    Task<UserSaveResult> UpdateAsync(Guid id, UpdateUserDto request);
 
     Task<bool> DeleteAsync(Guid id);
 }
 
-public enum UserUpdateResult
+public enum UserSaveResult
 {
-    Updated,
+    Saved,
     NotFound,
-    EmailTaken
+    EmailTaken,
+    InvalidCustomerLink,
+    HasTenantAccess
 }
