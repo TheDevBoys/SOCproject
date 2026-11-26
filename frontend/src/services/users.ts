@@ -1,7 +1,9 @@
 import type { User } from '../types/user'
 
 export async function getUsers(): Promise<User[]> {
-  const response = await fetch('/api/users')
+  const response = await fetch('/api/users', {
+    credentials: 'include',
+  })
 
   if (!response.ok) {
     throw new Error(`Failed to fetch users: ${response.status} ${response.statusText}`)
