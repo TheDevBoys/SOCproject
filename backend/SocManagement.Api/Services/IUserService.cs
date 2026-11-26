@@ -12,7 +12,7 @@ public interface IUserService
 
     Task<UserUpdateResult> UpdateAsync(Guid id, UpdateUserDto request);
 
-    Task<bool> DeleteAsync(Guid id);
+    Task<UserDeleteResult> DeleteAsync(Guid id);
 }
 
 public enum UserUpdateResult
@@ -20,4 +20,12 @@ public enum UserUpdateResult
     Updated,
     NotFound,
     EmailTaken
+}
+
+public enum UserDeleteResult
+{
+    Deleted,
+    NotFound,
+    Protected,
+    HasTicketRecords
 }

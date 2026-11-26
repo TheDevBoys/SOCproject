@@ -38,6 +38,12 @@ export default function RoleEditor({ mode, initial, catalog, target, onSaved, on
   const [error, setError] = useState('')
   const inherited = mode === 'user' ? catalog.roles.find(role => role.name === name)?.permissions ?? [] : []
 
+  const initialRolePermissions = catalog.roles.find(role => role.name === initial.name)?.permissions ?? []
+  const previousAccess = new Set([...initialRolePermissions, ...initial.permissions])
+  const currentAccess = new Set([...inherited, ...permissions])
+  const added = catalog.permissions.filter(key => currentAccess.has(key) && !previousAccess.has(key))
+  const removed = catalog.permissions.filter(key => previousAccess.has(key) && !currentAccess.has(key))
+
   async function save(event: FormEvent) {
     event.preventDefault()
     setSaving(true)
@@ -82,6 +88,12 @@ export default function RoleEditor({ mode, initial, catalog, target, onSaved, on
             </div>
           ))}
         </fieldset>
+        {mode === 'user' && (added.length > 0 || removed.length > 0) && (
+          <div role="status">
+            {added.length > 0 && <p>Gains {added.join(', ')}</p>}
+            {removed.length > 0 && <p>Loses {removed.join(', ')}</p>}
+          </div>
+        )}
         <Button type="submit">{saving ? 'Saving…' : 'Save'}</Button>{' '}
         <Button type="button" onClick={onCancel}>Cancel</Button>
       </fieldset>

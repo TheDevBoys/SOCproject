@@ -82,26 +82,47 @@ public class UserService : IUserService
         }
 
         user.Email = email;
+        if (request.Name is not null)
+        {
+            user.Name = request.Name.Trim();
+        }
 
         await _context.SaveChangesAsync();
 
         return UserUpdateResult.Updated;
     }
 
-    public async Task<bool> DeleteAsync(Guid id)
-    {
-        var user = await _context.Users.FindAsync(id);
-
-        if (user == null)
+    public Task<UserDeleteResult> DeleteAsync(Guid id) =>
+        _context.Database.CreateExecutionStrategy().ExecuteAsync(async () =>
         {
-            return false;
-        }
+            _context.ChangeTracker.Clear();
+            await using var transaction =
+                await _context.Database.BeginTransactionAsync(System.Data.IsolationLevel.Serializable);
 
-        _context.Users.Remove(user);
-        await _context.SaveChangesAsync();
+            var user = await _context.Users.SingleOrDefaultAsync(user => user.Id == id);
+            if (user is null)
+            {
+                return UserDeleteResult.NotFound;
+            }
 
-        return true;
-    }
+            if (user.Role == nameof(UserRole.Superuser))
+            {
+                return UserDeleteResult.Protected;
+            }
+
+            if (await _context.Tickets.AnyAsync(ticket => ticket.AssignedUserId == id) ||
+                await _context.Communications.AnyAsync(message => message.UserId == id) ||
+                await _context.TicketHistories.AnyAsync(history => history.UserId == id))
+            {
+                return UserDeleteResult.HasTicketRecords;
+            }
+
+            _context.Users.Remove(user);
+            await _context.SaveChangesAsync(acceptAllChangesOnSuccess: false);
+            await transaction.CommitAsync();
+            _context.ChangeTracker.AcceptAllChanges();
+            return UserDeleteResult.Deleted;
+        });
 
     private Task<bool> EmailInUseAsync(string email) =>
         _context.Users.AnyAsync(u => u.Email == email);

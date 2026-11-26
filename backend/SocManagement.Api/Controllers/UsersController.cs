@@ -101,6 +101,11 @@ public class UsersController : ControllerBase
             return Forbid();
         }
 
+        if (request.Name is not null && string.IsNullOrWhiteSpace(request.Name))
+        {
+            return BadRequest(new { message = "Name cannot be blank." });
+        }
+
         var result = await _userService.UpdateAsync(id, request);
 
         return result switch
@@ -132,22 +137,16 @@ public class UsersController : ControllerBase
             });
         }
 
-        if (await IsSuperuserAsync(id))
+        return await _userService.DeleteAsync(id) switch
         {
-            return Forbid();
-        }
-
-        var deleted = await _userService.DeleteAsync(id);
-
-        if (!deleted)
-        {
-            return NotFound(new
+            UserDeleteResult.Protected => Forbid(),
+            UserDeleteResult.NotFound => NotFound(new { message = "User not found." }),
+            UserDeleteResult.HasTicketRecords => Conflict(new
             {
-                message = "User not found."
-            });
-        }
-
-        return NoContent();
+                message = "This user has assigned tickets or ticket history and cannot be deleted."
+            }),
+            _ => NoContent()
+        };
     }
 
     private Task<bool> IsSuperuserAsync(Guid id) =>

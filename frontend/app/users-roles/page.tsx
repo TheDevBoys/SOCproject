@@ -12,6 +12,7 @@ import { inviteUser } from '../../src/services/invitation'
 import type { CurrentUser } from '../../src/types/auth'
 import type { User, UserRole } from '../../src/types/user'
 
+import UserActionDialog, { UserDialog } from './UserActionDialog'
 import RoleEditor, { roleRequest, type RoleAccess, type RoleCatalog } from './RoleEditor'
 import styles from './page.module.css'
 
@@ -50,6 +51,7 @@ export default function UsersRolesPage() {
   const [catalog, setCatalog] = useState<RoleCatalog | null>(null)
   const [editor, setEditor] = useState<{ mode: 'create' | 'role' | 'user'; initial: RoleAccess; target?: string } | null>(null)
   const [accessError, setAccessError] = useState('')
+  const [userAction, setUserAction] = useState<{ user: User; action: 'edit' | 'delete' } | null>(null)
   const availableRoles = catalog?.roles.map(role => role.name) ?? ['Tier1']
 
   async function editUserAccess(user: User) {
@@ -266,6 +268,8 @@ export default function UsersRolesPage() {
               </p>
             )}
 
+            {accessError && <p role="alert">{accessError}</p>}
+
             {/* USERS TABLE */}
 
             {error ? (
@@ -276,58 +280,108 @@ export default function UsersRolesPage() {
                   <thead>
                     <tr>
                       <th>Name</th>
+                      <th>Email</th>
                       <th>Role</th>
                       <th>Customer access</th>
                       <th>2FA</th>
                       <th>Last sign-in</th>
                       <th>Status</th>
+                      <th>Actions</th>
                     </tr>
                   </thead>
 
                   <tbody>
-                    {users.map(user => (
-                      <tr key={user.id}>
-                        <td className={styles.userName}>
-                          {user.name}
-                        </td>
+                    {users.map(user => {
+                      const protectedUser = user.role === 'Superuser'
+                      const canEdit = currentUser?.permissions.includes('user.update') && (!protectedUser || Boolean(catalog))
+                      const canEditAccess = Boolean(catalog) && !protectedUser
+                      const canDelete = currentUser?.permissions.includes('user.delete') && !protectedUser && currentUser.id !== user.id
 
-                        <td>
-                          {roleLabel(user.role)}
-                          {catalog && user.role !== 'Superuser' && (
-                            <Button type="button" onClick={() => editUserAccess(user)}>Edit access</Button>
-                          )}
-                        </td>
+                      return (
+                        <tr key={user.id}>
+                          <td className={styles.userName}>
+                            {user.name}
+                          </td>
 
-                        <td>
-                          {user.customerAccess}
-                        </td>
+                          <td>{user.email}</td>
+                          <td>{roleLabel(user.role)}</td>
 
-                        <td>
-                          <span
-                            className={
-                              user.twoFactor
-                                ? styles.activeBadge
-                                : styles.warningBadge
-                            }
-                          >
-                            {user.twoFactor
-                              ? 'Active'
-                              : 'Not set up'}
-                          </span>
-                        </td>
+                          <td>
+                            {user.customerAccess}
+                          </td>
 
-                        <td className={styles.muted}>
-                          {formatLastSignIn(user.lastSignIn)}
-                        </td>
+                          <td>
+                            <span
+                              className={
+                                user.twoFactor
+                                  ? styles.activeBadge
+                                  : styles.warningBadge
+                              }
+                            >
+                              {user.twoFactor
+                                ? 'Active'
+                                : 'Not set up'}
+                            </span>
+                          </td>
 
-                        <td>{user.status}</td>
-                      </tr>
-                    ))}
+                          <td className={styles.muted}>
+                            {formatLastSignIn(user.lastSignIn)}
+                          </td>
+
+                          <td>{user.status}</td>
+                          <td>
+                            {(canEdit || canEditAccess || canDelete) && (
+                              <details className={styles.userActions}>
+                                <summary aria-label={`Actions for ${user.name}`}>⋯</summary>
+                                <div className={styles.userActionOptions}>
+                                  {canEdit && (
+                                    <button type="button" onClick={event => {
+                                      event.currentTarget.closest('details')?.removeAttribute('open')
+                                      setUserAction({ user, action: 'edit' })
+                                    }}>Edit details</button>
+                                  )}
+                                  {canEditAccess && (
+                                    <button type="button" onClick={event => {
+                                      event.currentTarget.closest('details')?.removeAttribute('open')
+                                      void editUserAccess(user)
+                                    }}>Edit role and permissions</button>
+                                  )}
+                                  {canDelete && (
+                                    <button type="button" className={styles.dangerText} onClick={event => {
+                                      event.currentTarget.closest('details')?.removeAttribute('open')
+                                      setUserAction({ user, action: 'delete' })
+                                    }}>Delete user</button>
+                                  )}
+                                </div>
+                              </details>
+                            )}
+                          </td>
+                        </tr>
+                      )
+                    })}
                   </tbody>
                 </table>
               </div>
             )}
           </section>
+
+          {userAction && (
+            <UserActionDialog {...userAction} onCancel={() => setUserAction(null)} onSaved={updated => {
+              setUsers(current => updated
+                ? current.map(user => user.id === userAction.user.id ? updated : user)
+                : current.filter(user => user.id !== userAction.user.id))
+              setUserAction(null)
+            }} />
+          )}
+
+          {catalog && editor?.mode === 'user' && (
+            <UserDialog title={`Edit role and permissions for ${users.find(user => user.id === editor.target)?.name ?? 'user'}`}>
+              <div className={styles.inviteForm}>
+                <RoleEditor key={editor.target} {...editor}
+                  catalog={catalog} onSaved={refreshAccess} onCancel={() => setEditor(null)} />
+              </div>
+            </UserDialog>
+          )}
 
           {catalog && (
             <section className={styles.card} aria-labelledby="roles-heading">
@@ -337,8 +391,7 @@ export default function UsersRolesPage() {
                   New role
                 </Button>
               </div>
-              {accessError && <p role="alert">{accessError}</p>}
-              {editor && (
+              {editor && editor.mode !== 'user' && (
                 <RoleEditor key={editor.target ?? editor.initial.name} {...editor}
                   catalog={catalog} onSaved={refreshAccess} onCancel={() => setEditor(null)} />
               )}
