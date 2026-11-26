@@ -9,5 +9,6 @@ public enum UserRole
     Engineer,
     AccountManager,
     ForensicAnalyst,
-    Customer
+    Customer,
+    TicketIntakeOfficer,
 }
