@@ -1,10 +1,13 @@
+using Microsoft.AspNetCore.DataProtection.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using SocManagement.Api.Models;
 
 namespace SocManagement.Api.Data;
 
-public class SocDbContext(DbContextOptions<SocDbContext> options) : DbContext(options)
+public class SocDbContext(DbContextOptions<SocDbContext> options) : DbContext(options), IDataProtectionKeyContext
 {
+    public DbSet<DataProtectionKey> DataProtectionKeys => Set<DataProtectionKey>();
+
     public DbSet<User> Users => Set<User>();
 
     public DbSet<Ticket> Tickets => Set<Ticket>();
@@ -15,6 +18,7 @@ public class SocDbContext(DbContextOptions<SocDbContext> options) : DbContext(op
     public DbSet<TicketHistory> TicketHistories => Set<TicketHistory>();
     public DbSet<SLA> Slas => Set<SLA>();
     public DbSet<RetentionPolicy> RetentionPolicies => Set<RetentionPolicy>();
+    public DbSet<UserInvitation> UserInvitations => Set<UserInvitation>();
     
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -32,7 +36,7 @@ public class SocDbContext(DbContextOptions<SocDbContext> options) : DbContext(op
                 .HasMaxLength(100);
 
             entity.Property(u => u.MfaSecret)
-                .HasMaxLength(64);
+                .HasMaxLength(512);
 
             entity.Property(u => u.Role)
                 .HasConversion<string>()
@@ -41,10 +45,22 @@ public class SocDbContext(DbContextOptions<SocDbContext> options) : DbContext(op
             entity.Property(u => u.Status)
                 .HasConversion<string>()
                 .HasMaxLength(20);
-                
-            entity.HasData(SeedUsers.GetUsers());  
+        });
+
+        modelBuilder.Entity<UserInvitation>(entity =>
+        {
+            entity.Property(i => i.TokenHash)
+                .HasMaxLength(64)
+                .IsRequired();
+
+            entity.HasIndex(i => i.TokenHash)
+                .IsUnique();
+
+            entity.HasOne(i => i.User)
+                .WithMany()
+                .HasForeignKey(i => i.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
     }
 
 }
-

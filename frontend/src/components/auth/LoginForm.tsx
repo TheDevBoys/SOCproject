@@ -4,6 +4,7 @@ import { useState, type SubmitEvent } from 'react'
 import { useRouter } from 'next/navigation'
 import TextField from '../ui/TextField'
 import Button from '../ui/Button'
+import AuthCard from './AuthCard'
 import styles from './LoginForm.module.css'
 import { login } from '../../services/auth'
 
@@ -36,9 +37,13 @@ export default function LoginForm() {
   }
 
   return (
-    <section className={styles.card} aria-labelledby="login-title">
-      <h2 id="login-title">Sign in</h2>
-      <p className={styles.description}>Use your work account. Accounts are created by an administrator.</p>
+    <AuthCard
+      title="Sign in"
+      titleId="login-title"
+      size="compact"
+      description="Use your work account. Accounts are created by an administrator."
+      note="After signing in you confirm with your authenticator app."
+    >
       <form onSubmit={handleSubmit}>
         <div className={styles.fields}>
           <TextField
@@ -68,14 +73,10 @@ export default function LoginForm() {
         <Button variant="primary" className={styles.submit} type="submit" loading={loading}>
           {loading ? 'Signing in…' : 'Sign in'}
         </Button>
-        <button className={styles.register} type="button">
-          No account? Register
-        </button>
-        <button className={styles.forgot} type="button">
+        <button className={styles.forgot} type="button" onClick={() => setError('Contact your administrator if you want to reset your password.')}>
           Forgot your password?
         </button>
       </form>
-      <p className={styles.note}>After signing in you confirm with your authenticator app.</p>
-    </section>
+    </AuthCard>
   )
 }

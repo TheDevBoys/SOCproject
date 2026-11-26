@@ -1,0 +1,32 @@
+
+
+.fields {
+  display: grid;
+  gap: 16px;
+}
+
+.submit {
+  width: 100%;
+  margin-top: 18px;
+}
+
+.text {
+  margin: 12px 0 0;
+  color: #647184;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.link {
+  display: inline-block;
+  margin-top: 16px;
+  color: #4264e8;
+  font-size: 12px;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+
+  &:focus-visible {
+    outline: 2px solid #4264e8;
+    outline-offset: 3px;
+  }
+}
