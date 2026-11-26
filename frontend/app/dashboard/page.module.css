@@ -1,0 +1,107 @@
+.dashboardContent {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-width: 0;
+}
+
+.title {
+  margin: 0;
+  color: #202731;
+  font-size: 22px;
+  font-weight: 600;
+}
+
+.description {
+  margin: -14px 0 0;
+  color: #647184;
+  font-size: 13px;
+}
+
+.dashboardCards {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.metricCard,
+.card {
+  min-width: 0;
+  border: 1px solid #d7dee8;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.metricCard {
+  min-height: 138px;
+  padding: 20px 18px 16px;
+  box-shadow: 0 1px 2px rgb(15 23 42 / 3%);
+}
+
+.metricCard h2 {
+  margin: 0 0 8px;
+  color: #647184;
+  font-size: 13px;
+  font-weight: 400;
+}
+
+.metricCard strong {
+  display: block;
+  color: #202731;
+  font-size: 32px;
+  line-height: 1.1;
+  letter-spacing: -0.5px;
+}
+
+.metricCard .riskValue {
+  color: #9f1239;
+}
+
+.metricCard p {
+  margin: 8px 0 0;
+  color: #647184;
+  font-size: 12px;
+}
+
+.reportOverview,
+.dashboardCharts {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+}
+
+.reportOverview {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+}
+
+.dashboardCharts {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.card {
+  padding: 16px;
+}
+
+.card h3 {
+  margin: 0;
+  font-size: 14px;
+}
+
+.chart {
+  min-height: 180px;
+}
+
+@media (max-width: 1100px) {
+  .dashboardCards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 700px) {
+  .dashboardCards,
+  .reportOverview,
+  .dashboardCharts {
+    grid-template-columns: 1fr;
+  }
+}
