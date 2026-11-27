@@ -16,7 +16,6 @@ import type { User, UserRole } from '../../src/types/user'
 import UserActionDialog from './UserActionDialog'
 import UserDialog from './UserDialog'
 import RoleEditor, { roleRequest, type RoleAccess, type RoleCatalog } from './RoleEditor'
-import { permissionDescriptions } from './permissionDescriptions'
 import styles from './page.module.css'
 
 function formatLastSignIn(lastSignIn: string | null): string {
@@ -361,19 +360,20 @@ export default function UsersRolesPage() {
             </UserDialog>
           )}
 
-          {viewedRole && (
+          {catalog && viewedRole && (
             <UserDialog title={`Permissions for ${roleLabel(viewedRole.name, viewedRole.displayName)}`}
               onClose={() => setViewedRole(null)}>
               <dl className={styles.permissionList}>
-                {viewedRole.permissions.map(permission => (
-                  <div className={styles.permissionDetails} key={permission}>
+                {catalog.permissions.filter(permission => viewedRole.permissions.includes(permission.key)).map(permission => (
+                  <div className={styles.permissionDetails} key={permission.key}>
                     <dt>
-                      {permission}
-                      {permission === 'role.manage' && (
-                        <span className={styles.superuserPermissionBadge}>Superuser only</span>
+                      {permission.name}
+                      {!permission.isAssignable && (
+                        <span className={styles.permissionBadge}>Not assignable</span>
                       )}
                     </dt>
-                    {permissionDescriptions[permission] && <dd>{permissionDescriptions[permission]}</dd>}
+                    <dd><code className={styles.permissionKey}>{permission.key}</code></dd>
+                    {permission.description && <dd>{permission.description}</dd>}
                   </div>
                 ))}
               </dl>

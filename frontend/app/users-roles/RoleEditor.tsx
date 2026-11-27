@@ -4,13 +4,13 @@ import { useState, type FormEvent } from 'react'
 import { roleLabel } from '../../src/types/roleLabels'
 import Button from '../../src/components/ui/Button'
 import UserDialog from './UserDialog'
-import { permissionDescriptions } from './permissionDescriptions'
 import styles from './page.module.css'
 
 export type RoleAccess = { name: string; displayName?: string; permissions: string[]; customerId?: number }
+export type PermissionInfo = { key: string; name: string; description: string; isAssignable: boolean }
 export type RoleCatalog = {
   roles: RoleAccess[]
-  permissions: string[]
+  permissions: PermissionInfo[]
 }
 
 export async function roleRequest<T>(path = '', method = 'GET', body?: RoleAccess): Promise<T> {
@@ -44,7 +44,8 @@ export default function RoleEditor({ mode, initial, catalog, customers = [], tar
   const [name, setName] = useState(initial.name)
   const [displayName, setDisplayName] = useState(initial.displayName ?? initial.name)
   const [customerId, setCustomerId] = useState(initial.customerId?.toString() ?? '')
-  const [permissions, setPermissions] = useState(initial.permissions)
+  const assignable = new Set(catalog.permissions.filter(permission => permission.isAssignable).map(permission => permission.key))
+  const [permissions, setPermissions] = useState(initial.permissions.filter(key => assignable.has(key)))
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const inherited = mode === 'user' ? catalog.roles.find(role => role.name === name)?.permissions ?? [] : []
@@ -52,8 +53,8 @@ export default function RoleEditor({ mode, initial, catalog, customers = [], tar
   const initialRolePermissions = catalog.roles.find(role => role.name === initial.name)?.permissions ?? []
   const previousAccess = new Set([...initialRolePermissions, ...initial.permissions])
   const currentAccess = new Set([...inherited, ...permissions])
-  const added = catalog.permissions.filter(key => currentAccess.has(key) && !previousAccess.has(key))
-  const removed = catalog.permissions.filter(key => previousAccess.has(key) && !currentAccess.has(key))
+  const added = catalog.permissions.filter(({ key }) => currentAccess.has(key) && !previousAccess.has(key))
+  const removed = catalog.permissions.filter(({ key }) => previousAccess.has(key) && !currentAccess.has(key))
 
   async function save(event: FormEvent) {
     event.preventDefault()
@@ -112,16 +113,21 @@ export default function RoleEditor({ mode, initial, catalog, customers = [], tar
           <fieldset className={styles.permissionGroup}>
             <legend className={styles.inviteLabel}>{mode === 'user' ? 'Direct permissions' : 'Role permissions'}</legend>
             {catalog.permissions.map(permission => (
-              <label className={styles.permissionOption} key={permission}>
-                <input type="checkbox" checked={permissions.includes(permission)} onChange={event => {
-                  setPermissions(current => event.target.checked
-                    ? [...current, permission]
-                    : current.filter(key => key !== permission))
-                }} />
+              <label className={styles.permissionOption} key={permission.key}>
+                <input type="checkbox" disabled={!permission.isAssignable}
+                  checked={permissions.includes(permission.key)} onChange={event => {
+                    setPermissions(current => event.target.checked
+                      ? [...current, permission.key]
+                      : current.filter(key => key !== permission.key))
+                  }} />
                 <span className={styles.permissionDetails}>
-                  <strong>{permission}</strong>
-                  <span>{permissionDescriptions[permission]}</span>
-                  {inherited.includes(permission) && (
+                  <strong className={styles.permissionTitle}>
+                    {permission.name}
+                    {!permission.isAssignable && <span className={styles.permissionBadge}>Not assignable</span>}
+                  </strong>
+                  <code className={styles.permissionKey}>{permission.key}</code>
+                  <span>{permission.description}</span>
+                  {inherited.includes(permission.key) && (
                     <small className={styles.inviteHint}>Via {roleLabel(name, catalog.roles.find(role => role.name === name)?.displayName)}</small>
                   )}
                 </span>
@@ -131,8 +137,8 @@ export default function RoleEditor({ mode, initial, catalog, customers = [], tar
         </fieldset>
         {mode === 'user' && (added.length > 0 || removed.length > 0) && (
           <div className={styles.permissionChanges} role="status">
-            {added.length > 0 && <p>Gains {added.join(', ')}</p>}
-            {removed.length > 0 && <p>Loses {removed.join(', ')}</p>}
+            {added.length > 0 && <p>Gains {added.map(permission => permission.name).join(', ')}</p>}
+            {removed.length > 0 && <p>Loses {removed.map(permission => permission.name).join(', ')}</p>}
           </div>
         )}
         {error && <p className={styles.inviteError} role="alert">{error}</p>}

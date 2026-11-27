@@ -522,6 +522,10 @@
   margin-top: 3px;
 }
 
+.permissionOption:has(input:disabled) {
+  cursor: not-allowed;
+}
+
 .permissionDetails {
   display: grid;
   gap: 3px;
@@ -533,6 +537,18 @@
   color: #647184;
   font-size: 12px;
   line-height: 1.45;
+}
+
+.permissionTitle {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.permissionDetails .permissionKey {
+  color: #647184;
+  font-size: 11px;
 }
 
 .permissionCount {
@@ -572,7 +588,7 @@
   font-weight: 700;
 }
 
-.permissionList .superuserPermissionBadge {
+.permissionDetails .permissionBadge {
   padding: 2px 7px;
   border-radius: 999px;
   background: #eef2ff;
