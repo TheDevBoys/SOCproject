@@ -21,6 +21,9 @@ public class RolesController(SocDbContext context, ILogger<RolesController> logg
         var roles = await context.Roles.AsNoTracking().Include(role => role.Permissions)
             .OrderBy(role => role.Name).ToListAsync();
         var permissions = await context.Permissions.AsNoTracking().ToListAsync();
+        var userCounts = await context.Users.GroupBy(user => user.RoleId)
+            .Select(group => new { RoleId = group.Key, Count = group.Count() })
+            .ToDictionaryAsync(group => group.RoleId, group => group.Count);
 
         return Ok(new
         {
@@ -37,9 +40,36 @@ public class RolesController(SocDbContext context, ILogger<RolesController> logg
                 role.Id,
                 name = role.Key,
                 displayName = role.Name,
-                permissions = Permissions.ForRole(role)
+                permissions = Permissions.ForRole(role),
+                userCount = userCounts.GetValueOrDefault(role.Id)
             })
         });
+    }
+
+    [HttpDelete("{name}")]
+    public async Task<IActionResult> DeleteRole(string name)
+    {
+        var role = await context.Roles.Include(role => role.Permissions)
+            .SingleOrDefaultAsync(role => role.Key == name);
+        if (role is null) return NotFound();
+        if (Permissions.IsSuperuser(role)) return Forbid();
+
+        var userCount = await context.Users.CountAsync(user => user.RoleId == role.Id);
+        if (userCount > 0) return RoleInUse(userCount);
+
+        context.Roles.Remove(role);
+        try
+        {
+            await context.SaveChangesAsync();
+        }
+        catch (DbUpdateException)
+        {
+            return RoleInUse(await context.Users.CountAsync(user => user.RoleId == role.Id));
+        }
+
+        logger.LogInformation("User {ActorId} deleted role {Role} ({DisplayName}) with permissions {Permissions}",
+            ActorId, role.Key, role.Name, Describe(role.Permissions));
+        return NoContent();
     }
 
     [HttpPost]
@@ -163,6 +193,13 @@ public class RolesController(SocDbContext context, ILogger<RolesController> logg
     }
 
     private const string UnassignablePermissionMessage = "Unknown or non-assignable permission.";
+
+    private ConflictObjectResult RoleInUse(int userCount) => Conflict(new
+    {
+        message = userCount == 1
+            ? "This role is still assigned to 1 user. Assign that user another role before deleting it."
+            : $"This role is still assigned to {userCount} users. Assign them another role before deleting it."
+    });
 
     private string? ActorId => User.FindFirstValue(ClaimTypes.NameIdentifier);
 

@@ -6,7 +6,7 @@ import Button from '../../src/components/ui/Button'
 import UserDialog from './UserDialog'
 import styles from './page.module.css'
 
-export type RoleAccess = { name: string; displayName?: string; permissions: string[]; customerId?: number }
+export type RoleAccess = { name: string; displayName?: string; permissions: string[]; customerId?: number; userCount?: number }
 export type PermissionInfo = { key: string; name: string; description: string; isAssignable: boolean }
 export type RoleCatalog = {
   roles: RoleAccess[]

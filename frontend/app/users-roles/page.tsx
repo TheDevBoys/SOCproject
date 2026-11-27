@@ -40,7 +40,39 @@ export default function UsersRolesPage() {
   const [accessError, setAccessError] = useState('')
   const [actionMenu, setActionMenu] = useState<{ user: User; canEdit: boolean; canEditAccess: boolean; canDelete: boolean } | null>(null)
   const [userAction, setUserAction] = useState<{ user: User; action: 'edit' | 'delete' } | null>(null)
+  const [roleMenu, setRoleMenu] = useState<RoleAccess | null>(null)
+  const [roleToDelete, setRoleToDelete] = useState<RoleAccess | null>(null)
+  const [deletingRole, setDeletingRole] = useState(false)
+  const [deleteRoleError, setDeleteRoleError] = useState('')
   const availableRoles = catalog?.roles.map(role => role.name) ?? ['Tier1']
+
+  async function refreshRoleCounts() {
+    if (catalog) setCatalog(await roleRequest<RoleCatalog>())
+  }
+
+  async function deleteRole(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    if (!roleToDelete) return
+
+    setDeletingRole(true)
+    setDeleteRoleError('')
+    try {
+      await roleRequest(`/${encodeURIComponent(roleToDelete.name)}`, 'DELETE')
+      await refreshAccess()
+      setRoleToDelete(null)
+    } catch (error) {
+      setDeleteRoleError(error instanceof Error ? error.message : 'Could not delete the role.')
+    } finally {
+      setDeletingRole(false)
+    }
+  }
+
+  function closeDeleteRole() {
+    if (deletingRole) return
+
+    setRoleToDelete(null)
+    setDeleteRoleError('')
+  }
 
   async function editUserAccess(user: User) {
     setAccessError('')
@@ -150,6 +182,7 @@ export default function UsersRolesPage() {
         const updatedUsers = await getUsers()
         setUsers(updatedUsers)
         setError(null)
+        await refreshRoleCounts()
       } catch (refreshError) {
         console.error('Failed to refresh users:', refreshError)
       }
@@ -332,6 +365,7 @@ export default function UsersRolesPage() {
                 ? current.map(user => user.id === userAction.user.id ? updated : user)
                 : current.filter(user => user.id !== userAction.user.id))
               setUserAction(null)
+              if (!updated) void refreshRoleCounts().catch(() => undefined)
             }} />
           )}
 
@@ -380,6 +414,42 @@ export default function UsersRolesPage() {
             </UserDialog>
           )}
 
+          {roleMenu && (
+            <UserDialog title={roleLabel(roleMenu.name, roleMenu.displayName)} onClose={() => setRoleMenu(null)}>
+              <div className={styles.actionList}>
+                <Button variant="secondary" onClick={() => {
+                  setEditor({ mode: 'role', initial: roleMenu })
+                  setRoleMenu(null)
+                }}>Edit role and permissions</Button>
+                <Button variant="secondary" className={styles.dangerText} disabled={(roleMenu.userCount ?? 0) > 0}
+                  onClick={() => {
+                    setRoleToDelete(roleMenu)
+                    setRoleMenu(null)
+                  }}>Delete role</Button>
+                {(roleMenu.userCount ?? 0) > 0 && (
+                  <p className={styles.inviteHint}>
+                    {roleMenu.userCount === 1 ? '1 user has' : `${roleMenu.userCount} users have`} this role.
+                    Assign them another role before deleting it.
+                  </p>
+                )}
+              </div>
+            </UserDialog>
+          )}
+
+          {roleToDelete && (
+            <UserDialog title={`Delete ${roleLabel(roleToDelete.name, roleToDelete.displayName)}?`}
+              busy={deletingRole} onClose={closeDeleteRole}>
+              <form className={styles.inviteForm} onSubmit={deleteRole}>
+                <p>This permanently removes the role and its permissions. No users have this role.</p>
+                {deleteRoleError && <p role="alert" className={styles.inviteError}>{deleteRoleError}</p>}
+                <div className={styles.inviteActions}>
+                  <Button variant="secondary" autoFocus disabled={deletingRole} onClick={closeDeleteRole}>Cancel</Button>
+                  <Button type="submit" loading={deletingRole} className={styles.dangerButton}>Delete role</Button>
+                </div>
+              </form>
+            </UserDialog>
+          )}
+
           {catalog && editor && (
             <RoleEditor key={editor.target ?? editor.initial.name} {...editor}
               userName={users.find(user => user.id === editor.target)?.name}
@@ -397,12 +467,13 @@ export default function UsersRolesPage() {
               <div className={styles.tableWrapper}>
                 <table className={styles.permissionsTable}>
                   <thead>
-                    <tr><th>Role</th><th>Permissions</th><th>Actions</th></tr>
+                    <tr><th>Role</th><th>Users</th><th>Permissions</th><th>Actions</th></tr>
                   </thead>
                   <tbody>
                     {catalog.roles.map(role => (
                       <tr key={role.name}>
                         <td>{roleLabel(role.name, role.displayName)}</td>
+                        <td>{role.userCount ?? 0}</td>
                         <td>
                           {role.permissions.length ? (
                             <button type="button" className={styles.permissionCount}
@@ -415,9 +486,9 @@ export default function UsersRolesPage() {
                         </td>
                         <td>{role.name !== 'Superuser' && (
                           <button type="button" className={styles.userActions}
-                            aria-label={`Edit permissions for ${roleLabel(role.name, role.displayName)}`}
+                            aria-label={`Actions for ${roleLabel(role.name, role.displayName)}`}
                             aria-haspopup="dialog"
-                            onClick={() => setEditor({ mode: 'role', initial: role })}>
+                            onClick={() => setRoleMenu(role)}>
                             ⋯
                           </button>
                         )}</td>
