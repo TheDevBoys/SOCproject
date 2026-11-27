@@ -11,7 +11,7 @@ public static class SeedUsers
     private const string TestPasswordHash =
         "AQAAAAIAAYagAAAAEMI61lHn1YCfav7Eeo0QX8LrYAJnScraLLCt5t44psyOYf1Vi2jrJfele0pjqcufgA==";
 
-    public static User[] GetUsers() =>
+    public static User[] GetUsers(IReadOnlyDictionary<string, Guid> roles) =>
     [
         new()
         {
@@ -19,7 +19,7 @@ public static class SeedUsers
             Name = "M. Jansen",
             Email = "m.jansen@soc.nl",
             PasswordHash = TestPasswordHash,
-            Role = UserRole.Tier1,
+            RoleId = roles[nameof(UserRole.Tier1)],
             MfaEnabled = true,
             FailedLoginAttempts = 0,
             LockedUntil = null,
@@ -33,7 +33,7 @@ public static class SeedUsers
             Name = "S. Bakker",
             Email = "s.bakker@soc.nl",
             PasswordHash = TestPasswordHash,
-            Role = UserRole.Tier1,
+            RoleId = roles[nameof(UserRole.Tier1)],
             MfaEnabled = true,
             FailedLoginAttempts = 0,
             LockedUntil = null,
@@ -47,7 +47,7 @@ public static class SeedUsers
             Name = "R. Visser",
             Email = "r.visser@soc.nl",
             PasswordHash = TestPasswordHash,
-            Role = UserRole.Tier2,
+            RoleId = roles[nameof(UserRole.Tier2)],
             MfaEnabled = true,
             FailedLoginAttempts = 0,
             LockedUntil = null,
@@ -61,7 +61,7 @@ public static class SeedUsers
             Name = "L. Smit",
             Email = "l.smit@soc.nl",
             PasswordHash = TestPasswordHash,
-            Role = UserRole.Tier3,
+            RoleId = roles[nameof(UserRole.Tier3)],
             MfaEnabled = true,
             FailedLoginAttempts = 0,
             LockedUntil = null,
@@ -75,7 +75,7 @@ public static class SeedUsers
             Name = "P. de Wit",
             Email = "p.dewit@soc.nl",
             PasswordHash = TestPasswordHash,
-            Role = UserRole.Engineer,
+            RoleId = roles[nameof(UserRole.Engineer)],
             MfaEnabled = true,
             FailedLoginAttempts = 0,
             LockedUntil = null,
@@ -89,7 +89,7 @@ public static class SeedUsers
             Name = "A. Mulder",
             Email = "a.mulder@soc.nl",
             PasswordHash = TestPasswordHash,
-            Role = UserRole.AccountManager,
+            RoleId = roles[nameof(UserRole.AccountManager)],
             MfaEnabled = true,
             FailedLoginAttempts = 0,
             LockedUntil = null,
@@ -103,7 +103,7 @@ public static class SeedUsers
             Name = "K. Hendriks",
             Email = "k.hendriks@soc.nl",
             PasswordHash = TestPasswordHash,
-            Role = UserRole.Superuser,
+            RoleId = roles[nameof(UserRole.Superuser)],
             MfaEnabled = true,
             FailedLoginAttempts = 0,
             LockedUntil = null,
@@ -117,7 +117,7 @@ public static class SeedUsers
             Name = "N. Prins",
             Email = "n.prins@soc.nl",
             PasswordHash = TestPasswordHash,
-            Role = UserRole.ForensicAnalyst,
+            RoleId = roles[nameof(UserRole.ForensicAnalyst)],
             MfaEnabled = false,
             FailedLoginAttempts = 0,
             LockedUntil = null,

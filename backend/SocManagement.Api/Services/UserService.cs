@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using SocManagement.Api.Auth;
 using SocManagement.Api.Data;
 using SocManagement.Api.DTOs;
 using SocManagement.Api.Enums;
@@ -22,6 +23,7 @@ public class UserService : IUserService
     {
         var users = await _context.Users
             .AsNoTracking()
+            .Include(user => user.AccessRole)
             .OrderBy(u => u.Name)
             .Select(u => new
             {
@@ -37,6 +39,7 @@ public class UserService : IUserService
     {
         var result = await _context.Users
             .AsNoTracking()
+            .Include(user => user.AccessRole)
             .Where(u => u.Id == id)
             .Select(u => new
             {
@@ -62,12 +65,13 @@ public class UserService : IUserService
             return (UserSaveResult.InvalidCustomerLink, null);
         }
 
+        var role = await _context.Roles.SingleAsync(role => role.Key == request.Role);
         var user = new User
         {
             Id = Guid.NewGuid(),
             Name = request.Name.Trim(),
             Email = email,
-            Role = request.Role,
+            AccessRole = role,
             CustomerId = request.CustomerId,
             MfaEnabled = true,
             Status = UserStatus.Active
@@ -83,7 +87,7 @@ public class UserService : IUserService
 
     public async Task<UserSaveResult> UpdateAsync(Guid id, UpdateUserDto request)
     {
-        var user = await _context.Users.FindAsync(id);
+        var user = await _context.Users.Include(user => user.AccessRole).SingleOrDefaultAsync(user => user.Id == id);
 
         if (user == null)
         {
@@ -98,11 +102,11 @@ public class UserService : IUserService
             return UserSaveResult.EmailTaken;
         }
 
-        var newRole = request.Role ?? user.Role;
+        var newRole = request.Role ?? user.AccessRole.Key;
 
         // Klantgebruiker houdt zijn klant als er geen nieuwe wordt meegestuurd;
         // bij een medewerkersrol wordt CustomerId leeg (tenzij er foutief een is meegestuurd).
-        var newCustomerId = newRole == UserRole.Customer
+        var newCustomerId = newRole == nameof(UserRole.Customer)
             ? request.CustomerId ?? user.CustomerId
             : request.CustomerId;
 
@@ -112,43 +116,90 @@ public class UserService : IUserService
         }
 
         // RRM: klantgebruikers krijgen geen KlantToegang.
-        if (newRole == UserRole.Customer &&
+        if (newRole == nameof(UserRole.Customer) &&
             await _context.TenantAccesses.AnyAsync(t => t.UserId == id))
         {
             return UserSaveResult.HasTenantAccess;
         }
 
         user.Email = email;
-        user.Role = newRole;
+        if (newRole != user.AccessRole.Key)
+        {
+            user.AccessRole = await _context.Roles.SingleAsync(role => role.Key == newRole);
+        }
         user.CustomerId = newCustomerId;
+        if (request.Name is not null)
+        {
+            user.Name = request.Name.Trim();
+        }
 
         await _context.SaveChangesAsync();
 
         return UserSaveResult.Saved;
     }
 
-    public async Task<bool> DeleteAsync(Guid id)
-    {
-        var user = await _context.Users.FindAsync(id);
-
-        if (user == null)
+    public Task<UserDeleteResult> DeleteAsync(Guid id) =>
+        _context.Database.CreateExecutionStrategy().ExecuteAsync(async () =>
         {
-            return false;
+            _context.ChangeTracker.Clear();
+            await using var transaction =
+                await _context.Database.BeginTransactionAsync(System.Data.IsolationLevel.Serializable);
+
+            var user = await _context.Users.Include(user => user.AccessRole).SingleOrDefaultAsync(user => user.Id == id);
+            if (user is null)
+            {
+                return UserDeleteResult.NotFound;
+            }
+
+            if (Permissions.IsSuperuser(user.AccessRole))
+            {
+                return UserDeleteResult.Protected;
+            }
+
+            if (await _context.Tickets.AnyAsync(ticket => ticket.AssignedUserId == id) ||
+                await _context.Communications.AnyAsync(message => message.UserId == id) ||
+                await _context.TicketHistories.AnyAsync(history => history.UserId == id))
+            {
+                return UserDeleteResult.HasTicketRecords;
+            }
+
+            _context.Users.Remove(user);
+            await _context.SaveChangesAsync(acceptAllChangesOnSuccess: false);
+            await transaction.CommitAsync();
+            _context.ChangeTracker.AcceptAllChanges();
+            return UserDeleteResult.Deleted;
+        });
+
+    public async Task<UserStatusResult> SetStatusAsync(Guid id, UserStatus status)
+    {
+        var user = await _context.Users.Include(user => user.AccessRole).SingleOrDefaultAsync(user => user.Id == id);
+        if (user is null)
+        {
+            return UserStatusResult.NotFound;
         }
 
-        _context.Users.Remove(user);
-        await _context.SaveChangesAsync();
+        if (status == UserStatus.Inactive && Permissions.IsSuperuser(user.AccessRole))
+        {
+            return UserStatusResult.Protected;
+        }
 
-        return true;
+        if (user.Status == UserStatus.Invited)
+        {
+            return UserStatusResult.NotActivated;
+        }
+
+        user.Status = status;
+        await _context.SaveChangesAsync();
+        return UserStatusResult.Saved;
     }
 
     private Task<bool> EmailInUseAsync(string email) =>
         _context.Users.AnyAsync(u => u.Email == email);
 
     // Rol Customer => moet bij een bestaande klant horen; andere rollen => geen klant.
-    private async Task<bool> IsValidCustomerLinkAsync(UserRole role, int? customerId)
+    private async Task<bool> IsValidCustomerLinkAsync(string role, int? customerId)
     {
-        if (role == UserRole.Customer)
+        if (role == nameof(UserRole.Customer))
         {
             return customerId.HasValue &&
                    await _context.Customers.AnyAsync(c => c.Id == customerId.Value);
@@ -162,7 +213,9 @@ public class UserService : IUserService
         Id = user.Id,
         Name = user.Name,
         Email = user.Email,
-        Role = user.Role,
+        Role = user.AccessRole.Key,
+        RoleId = user.RoleId,
+        RoleName = user.AccessRole.Name,
         CustomerAccess = customerCount == 1 ? "1 customer" : $"{customerCount} customers",
         CustomerId = user.CustomerId,
         TwoFactor = user.MfaEnabled,

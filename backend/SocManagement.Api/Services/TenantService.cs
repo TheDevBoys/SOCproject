@@ -48,6 +48,7 @@ public class TenantService : ITenantService
     {
         var user = await _context.Users
             .AsNoTracking()
+            .Include(u => u.AccessRole)
             .FirstOrDefaultAsync(u => u.Id == userId);
 
         if (user == null)
@@ -56,7 +57,7 @@ public class TenantService : ITenantService
         }
 
         // RRM: alleen medewerkers krijgen KlantToegang.
-        if (user.Role == UserRole.Customer)
+        if (user.AccessRole.Key == nameof(UserRole.Customer))
         {
             return TenantAccessResult.NotAnEmployee;
         }
