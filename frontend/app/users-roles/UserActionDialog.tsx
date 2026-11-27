@@ -17,7 +17,6 @@ export default function UserActionDialog({ user, action, onCancel, onSaved }: {
   const removing = action === 'delete'
   const changingStatus = action === 'status'
   const deactivating = user.status === 'Active'
-  const destructive = removing || (changingStatus && deactivating)
   const [name, setName] = useState(user.name)
   const [email, setEmail] = useState(user.email)
   const [busy, setBusy] = useState(false)
@@ -74,7 +73,7 @@ export default function UserActionDialog({ user, action, onCancel, onSaved }: {
         {error && <p role="alert" className={styles.inviteError}>{error}</p>}
         <div className={styles.inviteActions}>
           <Button variant="secondary" autoFocus={removing || changingStatus} disabled={busy} onClick={onCancel}>Cancel</Button>
-          <Button type="submit" loading={busy} className={destructive ? styles.dangerButton : undefined}>
+          <Button type="submit" loading={busy} className={removing ? styles.dangerButton : changingStatus && deactivating ? styles.warningButton : undefined}>
             {removing ? 'Delete user'
               : changingStatus ? (deactivating ? 'Deactivate user' : 'Reactivate user')
               : 'Save changes'}

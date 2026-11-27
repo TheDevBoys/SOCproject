@@ -32,7 +32,7 @@ function RemovalActions({ menu, onSelect }: { menu: UserActionMenu; onSelect: (a
   return (
     <>
       {menu.canChangeStatus && (
-        <Button variant="secondary" className={menu.user.status === 'Active' ? styles.dangerText : undefined}
+        <Button variant="secondary" className={menu.user.status === 'Active' ? styles.warningText : undefined}
           onClick={() => onSelect('status')}>
           {menu.user.status === 'Active' ? 'Deactivate user' : 'Reactivate user'}
         </Button>

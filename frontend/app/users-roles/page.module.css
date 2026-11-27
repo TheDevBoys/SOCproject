@@ -477,9 +477,26 @@
   color: #a52222;
 }
 
+.actionList .warningText {
+  border-color: #fcd34d;
+  background: #fffbeb;
+  color: #92400e;
+}
+
+.actionList .warningText:hover {
+  border-color: #f59e0b;
+  background: #fef3c7;
+}
+
 .dialog .dangerButton {
   background: #a52222;
   border-color: #a52222;
+  color: #fff;
+}
+
+.dialog .warningButton {
+  background: #b45309;
+  border-color: #b45309;
   color: #fff;
 }
 
