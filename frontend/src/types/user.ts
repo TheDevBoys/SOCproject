@@ -7,6 +7,8 @@ export type User = {
   name: string
   email: string
   role: UserRole
+  roleId: string
+  roleName: string
   customerAccess: string
   twoFactor: boolean
   lastSignIn: string | null

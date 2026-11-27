@@ -28,7 +28,7 @@ public class InvitationsController : ControllerBase
         [FromBody] CreateInvitedUserDto request)
     {
         var role = await _context.Roles.Include(role => role.Permissions)
-            .SingleOrDefaultAsync(role => role.Name == request.Role);
+            .SingleOrDefaultAsync(role => role.Key == request.Role);
         if (role is null)
         {
             return BadRequest(new { message = "Select an existing role." });
@@ -44,7 +44,7 @@ public class InvitationsController : ControllerBase
             var invitation = await _invitationService.InviteUserAsync(
                 request.Name,
                 request.Email,
-                role.Name,
+                role.Key,
                 request.CustomerId
             );
 

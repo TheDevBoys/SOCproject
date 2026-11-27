@@ -18,7 +18,7 @@ export default function AccountLayout({ children }: { children: ReactNode }) {
     <div className={[styles.shell, collapsed && styles.collapsedShell].filter(Boolean).join(' ')}>
       <Sidebar collapsed={collapsed} onToggle={() => setCollapsed(value => !value)} />
       <div className={styles.workspace}>
-        <PageTopbar title={`My account / ${isSecurity ? 'Security' : 'Profile'}`} userName={user?.name ?? ''} userRole={user ? roleLabel(user.role) : ''} twoFactorEnabled={user?.mfaEnabled ?? false} sampleData={isSecurity} />
+        <PageTopbar title={`My account / ${isSecurity ? 'Security' : 'Profile'}`} userName={user?.name ?? ''} userRole={user ? roleLabel(user.role, user.roleName) : ''} twoFactorEnabled={user?.mfaEnabled ?? false} sampleData={isSecurity} />
         <main className={styles.main}>
           <h1>My account</h1>
           <nav className={styles.tabs} aria-label="Account sections">

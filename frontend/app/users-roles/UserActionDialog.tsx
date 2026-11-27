@@ -1,32 +1,12 @@
 'use client'
 
-import { useEffect, useId, useRef, useState, type FormEvent, type ReactNode } from 'react'
+import { useState, type FormEvent } from 'react'
 import Button from '../../src/components/ui/Button'
 import { deleteUser, updateUser } from '../../src/services/users'
 import type { User } from '../../src/types/user'
 
+import UserDialog from './UserDialog'
 import styles from './page.module.css'
-
-export function UserDialog({ title, children }: { title: string; children: ReactNode }) {
-  const dialog = useRef<HTMLDialogElement>(null)
-  const heading = useId()
-
-  useEffect(() => {
-    const element = dialog.current
-    element?.showModal()
-    return () => element?.close()
-  }, [])
-
-  return (
-    <dialog ref={dialog} aria-labelledby={heading} className={`${styles.inviteModal} ${styles.userDialog}`}
-      onCancel={event => event.preventDefault()}>
-      <div className={styles.inviteModalHeader}>
-        <h2 id={heading} className={styles.inviteModalTitle}>{title}</h2>
-      </div>
-      {children}
-    </dialog>
-  )
-}
 
 export default function UserActionDialog({ user, action, onCancel, onSaved }: {
   user: User
@@ -60,7 +40,7 @@ export default function UserActionDialog({ user, action, onCancel, onSaved }: {
   }
 
   return (
-    <UserDialog title={removing ? `Delete ${user.name}?` : `Edit ${user.name}`}>
+    <UserDialog title={removing ? `Delete ${user.name}?` : `Edit ${user.name}`} busy={busy} onClose={onCancel}>
       <form className={styles.inviteForm} onSubmit={submit}>
         {removing ? (
           <p>This will remove <strong>{user.email}</strong> and end their access to the SOC.</p>
@@ -68,15 +48,15 @@ export default function UserActionDialog({ user, action, onCancel, onSaved }: {
           <>
             <label className={styles.inviteField}>
               Name
-              <input required maxLength={100} value={name} onChange={event => setName(event.target.value)} />
+              <input className={styles.inviteInput} disabled={busy} required maxLength={100} value={name} onChange={event => setName(event.target.value)} />
             </label>
             <label className={styles.inviteField}>
               Email
-              <input required type="email" value={email} onChange={event => setEmail(event.target.value)} />
+              <input className={styles.inviteInput} disabled={busy} required type="email" value={email} onChange={event => setEmail(event.target.value)} />
             </label>
           </>
         )}
-        {error && <p role="alert">{error}</p>}
+        {error && <p role="alert" className={styles.inviteError}>{error}</p>}
         <div className={styles.inviteActions}>
           <Button variant="secondary" autoFocus={removing} disabled={busy} onClick={onCancel}>Cancel</Button>
           <Button type="submit" loading={busy} className={removing ? styles.dangerButton : undefined}>

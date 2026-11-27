@@ -60,7 +60,7 @@ public class UsersController : ControllerBase
         [FromBody] CreateUserDto request)
     {
         var role = await _context.Roles.Include(role => role.Permissions)
-            .SingleOrDefaultAsync(role => role.Name == request.Role);
+            .SingleOrDefaultAsync(role => role.Key == request.Role);
         if (role is null)
         {
             return BadRequest(new { message = "Select an existing role." });
@@ -71,7 +71,7 @@ public class UsersController : ControllerBase
             return Forbid();
         }
 
-        request.Role = role.Name;
+        request.Role = role.Key;
         var (result, user) = await _userService.CreateAsync(request);
 
         if (result == UserSaveResult.EmailTaken)
@@ -118,18 +118,18 @@ public class UsersController : ControllerBase
 
             if (request.Role is not null)
             {
-                var role = await _context.Roles.FindAsync(request.Role);
+                var role = await _context.Roles.SingleOrDefaultAsync(role => role.Key == request.Role);
                 if (role is null)
                 {
                     return BadRequest(new { message = "Select an existing role." });
                 }
 
-                if (await IsSuperuserAsync(id) && role.Name != nameof(UserRole.Superuser))
+                if (await IsSuperuserAsync(id) && role.Key != nameof(UserRole.Superuser))
                 {
                     return Forbid();
                 }
 
-                request.Role = role.Name;
+                request.Role = role.Key;
             }
         }
 
@@ -190,7 +190,7 @@ public class UsersController : ControllerBase
     }
 
     private Task<bool> IsSuperuserAsync(Guid id) =>
-        _context.Users.AnyAsync(user => user.Id == id && user.Role == nameof(UserRole.Superuser));
+        _context.Users.AnyAsync(user => user.Id == id && user.AccessRole.Key == nameof(UserRole.Superuser));
 
     private Guid? CurrentUserId() =>
         Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var id) ? id : null;

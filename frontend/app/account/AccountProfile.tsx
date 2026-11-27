@@ -10,7 +10,7 @@ export default function AccountProfile() {
 
   if (!user) return null
 
-  const role = roleLabel(user.role)
+  const role = roleLabel(user.role, user.roleName)
   const initials = user.name.trim().split(/\s+/).slice(0, 2)
     .map(part => Array.from(part)[0] ?? '').join('').toUpperCase()
   const customerAccess = user.customerAccessCount === 1 ? '1 customer' : `${user.customerAccessCount} customers`

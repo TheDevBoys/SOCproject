@@ -21,7 +21,9 @@ export async function login(request: LoginRequest): Promise<LoginResponse> {
 
 export async function getMfaSetup(): Promise<MfaSetup | null> {
   const response = await fetch('/api/auth/mfa/setup', {
-    credentials: 'include',})
+    credentials: 'include',
+    cache: 'no-store',
+  })
 
   if (response.status === 401) {
     return null
@@ -55,7 +57,9 @@ export async function verifyMfa(code: string): Promise<boolean> {
 
 export async function getCurrentUser(): Promise<CurrentUser | null> {
   const response = await fetch('/api/auth/me', {
-    credentials: 'include',})
+    credentials: 'include',
+    cache: 'no-store',
+  })
 
   if (response.status === 401) {
     return null

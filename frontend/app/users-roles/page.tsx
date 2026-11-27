@@ -13,8 +13,10 @@ import type { CurrentUser } from '../../src/types/auth'
 import { roleLabel } from '../../src/types/roleLabels'
 import type { User, UserRole } from '../../src/types/user'
 
-import UserActionDialog, { UserDialog } from './UserActionDialog'
+import UserActionDialog from './UserActionDialog'
+import UserDialog from './UserDialog'
 import RoleEditor, { roleRequest, type RoleAccess, type RoleCatalog } from './RoleEditor'
+import { permissionDescriptions } from './permissionDescriptions'
 import styles from './page.module.css'
 
 function formatLastSignIn(lastSignIn: string | null): string {
@@ -34,8 +36,10 @@ export default function UsersRolesPage() {
   const [collapsed, setCollapsed] = useState(false)
   const [customers, setCustomers] = useState<{ id: number; name: string }[]>([])
   const [catalog, setCatalog] = useState<RoleCatalog | null>(null)
+  const [viewedRole, setViewedRole] = useState<RoleAccess | null>(null)
   const [editor, setEditor] = useState<{ mode: 'create' | 'role' | 'user'; initial: RoleAccess; target?: string } | null>(null)
   const [accessError, setAccessError] = useState('')
+  const [actionMenu, setActionMenu] = useState<{ user: User; canEdit: boolean; canEditAccess: boolean; canDelete: boolean } | null>(null)
   const [userAction, setUserAction] = useState<{ user: User; action: 'edit' | 'delete' } | null>(null)
   const availableRoles = catalog?.roles.map(role => role.name) ?? ['Tier1']
 
@@ -116,23 +120,6 @@ export default function UsersRolesPage() {
     setInviteError(null)
   }
 
-  useEffect(() => {
-    if (!showInviteForm) return
-
-    function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === 'Escape' && !inviting) {
-        setShowInviteForm(false)
-        setInviteError(null)
-      }
-    }
-
-    document.addEventListener('keydown', handleKeyDown)
-
-    return () => {
-      document.removeEventListener('keydown', handleKeyDown)
-    }
-  }, [showInviteForm, inviting])
-
   async function handleInvite(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
 
@@ -208,7 +195,7 @@ export default function UsersRolesPage() {
           userName={currentUser?.name ?? ''}
           userRole={
             currentUser
-              ? roleLabel(currentUser.role)
+              ? roleLabel(currentUser.role, currentUser.roleName)
               : ''
           }
           twoFactorEnabled={currentUser?.mfaEnabled ?? false}
@@ -297,7 +284,7 @@ export default function UsersRolesPage() {
                           </td>
 
                           <td>{user.email}</td>
-                          <td>{roleLabel(user.role)}</td>
+                          <td>{roleLabel(user.role, user.roleName)}</td>
 
                           <td>
                             {user.customerAccess}
@@ -324,29 +311,11 @@ export default function UsersRolesPage() {
                           <td>{user.status}</td>
                           <td>
                             {(canEdit || canEditAccess || canDelete) && (
-                              <details className={styles.userActions}>
-                                <summary aria-label={`Actions for ${user.name}`}>⋯</summary>
-                                <div className={styles.userActionOptions}>
-                                  {canEdit && (
-                                    <button type="button" onClick={event => {
-                                      event.currentTarget.closest('details')?.removeAttribute('open')
-                                      setUserAction({ user, action: 'edit' })
-                                    }}>Edit details</button>
-                                  )}
-                                  {canEditAccess && (
-                                    <button type="button" onClick={event => {
-                                      event.currentTarget.closest('details')?.removeAttribute('open')
-                                      void editUserAccess(user)
-                                    }}>Edit role and permissions</button>
-                                  )}
-                                  {canDelete && (
-                                    <button type="button" className={styles.dangerText} onClick={event => {
-                                      event.currentTarget.closest('details')?.removeAttribute('open')
-                                      setUserAction({ user, action: 'delete' })
-                                    }}>Delete user</button>
-                                  )}
-                                </div>
-                              </details>
+                              <button type="button" className={styles.userActions}
+                                aria-label={`Actions for ${user.name}`} aria-haspopup="dialog"
+                                onClick={() => setActionMenu({ user, canEdit: Boolean(canEdit), canEditAccess, canDelete: Boolean(canDelete) })}>
+                                ⋯
+                              </button>
                             )}
                           </td>
                         </tr>
@@ -367,13 +336,54 @@ export default function UsersRolesPage() {
             }} />
           )}
 
-          {catalog && editor?.mode === 'user' && (
-            <UserDialog title={`Edit role and permissions for ${users.find(user => user.id === editor.target)?.name ?? 'user'}`}>
-              <div className={styles.inviteForm}>
-                <RoleEditor key={editor.target} {...editor}
-                  catalog={catalog} customers={customers} onSaved={refreshAccess} onCancel={() => setEditor(null)} />
+          {actionMenu && (
+            <UserDialog title={actionMenu.user.name} description={actionMenu.user.email} onClose={() => setActionMenu(null)}>
+              <div className={styles.actionList}>
+                {actionMenu.canEdit && (
+                  <Button variant="secondary" onClick={() => {
+                    setUserAction({ user: actionMenu.user, action: 'edit' })
+                    setActionMenu(null)
+                  }}>Edit details</Button>
+                )}
+                {actionMenu.canEditAccess && (
+                  <Button variant="secondary" onClick={() => {
+                    void editUserAccess(actionMenu.user)
+                    setActionMenu(null)
+                  }}>Edit role and permissions</Button>
+                )}
+                {actionMenu.canDelete && (
+                  <Button variant="secondary" className={styles.dangerText} onClick={() => {
+                    setUserAction({ user: actionMenu.user, action: 'delete' })
+                    setActionMenu(null)
+                  }}>Delete user</Button>
+                )}
               </div>
             </UserDialog>
+          )}
+
+          {viewedRole && (
+            <UserDialog title={`Permissions for ${roleLabel(viewedRole.name, viewedRole.displayName)}`}
+              onClose={() => setViewedRole(null)}>
+              <dl className={styles.permissionList}>
+                {viewedRole.permissions.map(permission => (
+                  <div className={styles.permissionDetails} key={permission}>
+                    <dt>
+                      {permission}
+                      {permission === 'role.manage' && (
+                        <span className={styles.superuserPermissionBadge}>Superuser only</span>
+                      )}
+                    </dt>
+                    {permissionDescriptions[permission] && <dd>{permissionDescriptions[permission]}</dd>}
+                  </div>
+                ))}
+              </dl>
+            </UserDialog>
+          )}
+
+          {catalog && editor && (
+            <RoleEditor key={editor.target ?? editor.initial.name} {...editor}
+              userName={users.find(user => user.id === editor.target)?.name}
+              catalog={catalog} customers={customers} onSaved={refreshAccess} onCancel={() => setEditor(null)} />
           )}
 
           {catalog && (
@@ -384,10 +394,6 @@ export default function UsersRolesPage() {
                   New role
                 </Button>
               </div>
-              {editor && editor.mode !== 'user' && (
-                <RoleEditor key={editor.target ?? editor.initial.name} {...editor}
-                  catalog={catalog} onSaved={refreshAccess} onCancel={() => setEditor(null)} />
-              )}
               <div className={styles.tableWrapper}>
                 <table className={styles.permissionsTable}>
                   <thead>
@@ -396,12 +402,24 @@ export default function UsersRolesPage() {
                   <tbody>
                     {catalog.roles.map(role => (
                       <tr key={role.name}>
-                        <td>{roleLabel(role.name)}</td>
-                        <td>{role.permissions.join(', ') || '—'}</td>
+                        <td>{roleLabel(role.name, role.displayName)}</td>
+                        <td>
+                          {role.permissions.length ? (
+                            <button type="button" className={styles.permissionCount}
+                              aria-haspopup="dialog"
+                              aria-label={`View permissions for ${roleLabel(role.name, role.displayName)}`}
+                              onClick={() => setViewedRole(role)}>
+                              {role.permissions.length} {role.permissions.length === 1 ? 'permission' : 'permissions'}
+                            </button>
+                          ) : '—'}
+                        </td>
                         <td>{role.name !== 'Superuser' && (
-                          <Button type="button" onClick={() => setEditor({ mode: 'role', initial: role })}>
-                            Edit permissions
-                          </Button>
+                          <button type="button" className={styles.userActions}
+                            aria-label={`Edit permissions for ${roleLabel(role.name, role.displayName)}`}
+                            aria-haspopup="dialog"
+                            onClick={() => setEditor({ mode: 'role', initial: role })}>
+                            ⋯
+                          </button>
                         )}</td>
                       </tr>
                     ))}
@@ -416,192 +434,145 @@ export default function UsersRolesPage() {
       {/* INVITE USER MODAL */}
 
       {showInviteForm && currentUser?.permissions.includes('user.invite') && (
-        <div
-          className={styles.modalBackdrop}
-          onMouseDown={event => {
-            if (event.target === event.currentTarget) {
-              closeInviteForm()
-            }
-          }}
+        <UserDialog title="Invite a new user"
+          description="Send an invitation to create an account in the SOC management system."
+          busy={inviting} onClose={closeInviteForm}>
+        <form
+          onSubmit={handleInvite}
+          className={styles.inviteForm}
         >
-          <section
-            className={styles.inviteModal}
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="invite-modal-title"
-            aria-describedby="invite-modal-description"
-          >
-            {/* MODAL HEADER */}
+          {/* FULL NAME */}
 
-            <div className={styles.inviteModalHeader}>
-              <div>
-                <h2
-                  id="invite-modal-title"
-                  className={styles.inviteModalTitle}
-                >
-                  Invite a new user
-                </h2>
-
-                <p
-                  id="invite-modal-description"
-                  className={styles.inviteModalDescription}
-                >
-                  Send an invitation to create an account
-                  in the SOC management system.
-                </p>
-              </div>
-
-              <button
-                type="button"
-                className={styles.inviteCloseButton}
-                aria-label="Close invitation"
-                disabled={inviting}
-                onClick={closeInviteForm}
-              >
-                ×
-              </button>
-            </div>
-
-            {/* INVITATION FORM */}
-
-            <form
-              onSubmit={handleInvite}
-              className={styles.inviteForm}
+          <div className={styles.inviteField}>
+            <label
+              htmlFor="invite-name"
+              className={styles.inviteLabel}
             >
-              {/* FULL NAME */}
+              Full name
+            </label>
 
-              <div className={styles.inviteField}>
-                <label
-                  htmlFor="invite-name"
-                  className={styles.inviteLabel}
-                >
-                  Full name
-                </label>
+            <input
+              id="invite-name"
+              className={styles.inviteInput}
+              type="text"
+              value={inviteName}
+              onChange={event =>
+                setInviteName(event.target.value)
+              }
+              required
+              maxLength={100}
+              autoComplete="name"
+              disabled={inviting}
+              placeholder="Enter full name"
+              autoFocus
+            />
+          </div>
 
-                <input
-                  id="invite-name"
-                  className={styles.inviteInput}
-                  type="text"
-                  value={inviteName}
-                  onChange={event =>
-                    setInviteName(event.target.value)
-                  }
-                  required
-                  maxLength={100}
-                  autoComplete="name"
-                  disabled={inviting}
-                  placeholder="Enter full name"
-                  autoFocus
-                />
-              </div>
+          {/* EMAIL */}
 
-              {/* EMAIL */}
+          <div className={styles.inviteField}>
+            <label
+              htmlFor="invite-email"
+              className={styles.inviteLabel}
+            >
+              Email address
+            </label>
 
-              <div className={styles.inviteField}>
-                <label
-                  htmlFor="invite-email"
-                  className={styles.inviteLabel}
-                >
-                  Email address
-                </label>
+            <input
+              id="invite-email"
+              className={styles.inviteInput}
+              type="email"
+              value={inviteEmail}
+              onChange={event =>
+                setInviteEmail(event.target.value)
+              }
+              required
+              autoComplete="email"
+              disabled={inviting}
+              placeholder="name@company.com"
+            />
 
-                <input
-                  id="invite-email"
-                  className={styles.inviteInput}
-                  type="email"
-                  value={inviteEmail}
-                  onChange={event =>
-                    setInviteEmail(event.target.value)
-                  }
-                  required
-                  autoComplete="email"
-                  disabled={inviting}
-                  placeholder="name@company.com"
-                />
+            <p className={styles.inviteHint}>
+              An invitation link will be sent to this address.
+            </p>
+          </div>
 
-                <p className={styles.inviteHint}>
-                  An invitation link will be sent to this address.
-                </p>
-              </div>
+          {/* ROLE */}
 
-              {/* ROLE */}
+          <div className={styles.inviteField}>
+            <label
+              htmlFor="invite-role"
+              className={styles.inviteLabel}
+            >
+              User role
+            </label>
 
-              <div className={styles.inviteField}>
-                <label
-                  htmlFor="invite-role"
-                  className={styles.inviteLabel}
-                >
-                  User role
-                </label>
+            <select
+              id="invite-role"
+              className={styles.inviteInput}
+              value={inviteRole}
+              onChange={event =>
+                setInviteRole(event.target.value as UserRole)
+              }
+              required
+              disabled={inviting}
+            >
+              {availableRoles.map(role => (
+                <option key={role} value={role}>
+                  {roleLabel(role, catalog?.roles.find(item => item.name === role)?.displayName)}
+                </option>
+              ))}
+            </select>
 
-                <select
-                  id="invite-role"
-                  className={styles.inviteInput}
-                  value={inviteRole}
-                  onChange={event =>
-                    setInviteRole(event.target.value as UserRole)
-                  }
-                  required
-                  disabled={inviting}
-                >
-                  {availableRoles.map(role => (
-                    <option key={role} value={role}>
-                      {roleLabel(role)}
-                    </option>
-                  ))}
-                </select>
+            <p className={styles.inviteHint}>
+              This role determines the user's permissions.
+            </p>
+          </div>
 
-                <p className={styles.inviteHint}>
-                  This role determines the user's permissions.
-                </p>
-              </div>
+          {/* ERROR MESSAGE */}
 
-              {/* ERROR MESSAGE */}
+          {inviteRole === 'Customer' && (
+            <label className={styles.inviteField}>
+              Customer
+              <select className={styles.inviteInput} required disabled={inviting}
+                value={inviteCustomer} onChange={event => setInviteCustomer(event.target.value)}>
+                <option value="">Select a customer</option>
+                {customers.map(customer => <option key={customer.id} value={customer.id}>{customer.name}</option>)}
+              </select>
+            </label>
+          )}
 
-              {inviteRole === 'Customer' && (
-                <label className={styles.inviteField}>
-                  Customer
-                  <select className={styles.inviteInput} required disabled={inviting}
-                    value={inviteCustomer} onChange={event => setInviteCustomer(event.target.value)}>
-                    <option value="">Select a customer</option>
-                    {customers.map(customer => <option key={customer.id} value={customer.id}>{customer.name}</option>)}
-                  </select>
-                </label>
-              )}
+          {inviteError && (
+            <p
+              role="alert"
+              className={styles.inviteError}
+            >
+              {inviteError}
+            </p>
+          )}
 
-              {inviteError && (
-                <p
-                  role="alert"
-                  className={styles.inviteError}
-                >
-                  {inviteError}
-                </p>
-              )}
+          {/* ACTION BUTTONS */}
 
-              {/* ACTION BUTTONS */}
+          <div className={styles.inviteActions}>
+            <Button variant="secondary"
+              type="button"
+              disabled={inviting}
+              onClick={closeInviteForm}
+            >
+              Cancel
+            </Button>
 
-              <div className={styles.inviteActions}>
-                <button
-                  type="button"
-                  className={styles.inviteCancelButton}
-                  disabled={inviting}
-                  onClick={closeInviteForm}
-                >
-                  Cancel
-                </button>
-
-                <Button
-                  type="submit"
-                  disabled={inviting}
-                >
-                  {inviting
-                    ? 'Sending invitation...'
-                    : 'Send invitation'}
-                </Button>
-              </div>
-            </form>
-          </section>
-        </div>
+            <Button
+              type="submit"
+              disabled={inviting}
+            >
+              {inviting
+                ? 'Sending invitation...'
+                : 'Send invitation'}
+            </Button>
+          </div>
+        </form>
+        </UserDialog>
       )}
     </div>
   )

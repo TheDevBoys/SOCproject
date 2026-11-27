@@ -26,16 +26,18 @@ public class RolesController(SocDbContext context, ILogger<RolesController> logg
             permissions = Permissions.All,
             roles = roles.Select(role => new
             {
-                role.Name,
-                permissions = role.Name == nameof(UserRole.Superuser)
-                    ? Permissions.All
+                role.Id,
+                name = role.Key,
+                displayName = role.Name,
+                permissions = role.Key == nameof(UserRole.Superuser)
+                    ? Permissions.All.Prepend(Permissions.RoleManage).ToArray()
                     : role.Permissions.Select(permission => permission.Key).ToArray()
             })
         });
     }
 
     [HttpPost]
-    public async Task<IActionResult> CreateRole(RoleRequest request)
+    public async Task<IActionResult> CreateRole(CreateRoleRequest request)
     {
         var name = request.Name.Trim();
         if (await context.Roles.AnyAsync(role => role.Name == name))
@@ -49,7 +51,8 @@ public class RolesController(SocDbContext context, ILogger<RolesController> logg
             return BadRequest(new { message = "Unknown permission." });
         }
 
-        context.Roles.Add(new Role { Name = name, Permissions = permissions });
+        var key = $"custom_{Guid.NewGuid():N}"[..20];
+        context.Roles.Add(new Role { Key = key, Name = name, Permissions = permissions });
         await context.SaveChangesAsync();
         logger.LogInformation("User {ActorId} created role {Role} with permissions {Permissions}",
             ActorId, name, Describe(permissions));
@@ -60,9 +63,17 @@ public class RolesController(SocDbContext context, ILogger<RolesController> logg
     public async Task<IActionResult> SetRolePermissions(RoleRequest request)
     {
         var role = await context.Roles.Include(role => role.Permissions)
-            .SingleOrDefaultAsync(role => role.Name == request.Name);
+            .SingleOrDefaultAsync(role => role.Key == request.Name);
         if (role is null) return NotFound();
-        if (role.Name == nameof(UserRole.Superuser)) return Forbid();
+        if (role.Key == nameof(UserRole.Superuser)) return Forbid();
+
+        if (request.DisplayName is not null)
+        {
+            if (string.IsNullOrWhiteSpace(request.DisplayName))
+                return BadRequest(new { message = "Role name cannot be blank." });
+
+            role.Name = request.DisplayName.Trim();
+        }
 
         var permissions = await ResolvePermissionsAsync(request.Permissions);
         if (permissions is null) return BadRequest(new { message = "Unknown permission." });
@@ -71,18 +82,19 @@ public class RolesController(SocDbContext context, ILogger<RolesController> logg
         role.Permissions = permissions;
         await context.SaveChangesAsync();
         logger.LogInformation("User {ActorId} changed permissions for role {Role} from {PreviousPermissions} to {Permissions}",
-            ActorId, role.Name, previousPermissions, Describe(permissions));
+            ActorId, role.Key, previousPermissions, Describe(permissions));
         return NoContent();
     }
 
     [HttpGet("users/{id:guid}")]
     public async Task<IActionResult> GetUserAccess(Guid id)
     {
-        var user = await context.Users.AsNoTracking().Include(user => user.DirectPermissions)
+        var user = await context.Users.AsNoTracking().Include(user => user.DirectPermissions).Include(user => user.AccessRole)
             .SingleOrDefaultAsync(user => user.Id == id);
         return user is null ? NotFound() : Ok(new
         {
-            name = user.Role,
+            name = user.AccessRole.Key,
+            roleId = user.RoleId,
             user.CustomerId,
             permissions = user.DirectPermissions.Select(permission => permission.Key)
         });
@@ -91,13 +103,13 @@ public class RolesController(SocDbContext context, ILogger<RolesController> logg
     [HttpPut("users/{id:guid}")]
     public async Task<IActionResult> SetUserAccess(Guid id, RoleRequest request)
     {
-        var user = await context.Users.Include(user => user.DirectPermissions)
+        var user = await context.Users.Include(user => user.DirectPermissions).Include(user => user.AccessRole)
             .SingleOrDefaultAsync(user => user.Id == id);
         if (user is null) return NotFound();
 
-        var role = await context.Roles.FindAsync(request.Name);
+        var role = await context.Roles.SingleOrDefaultAsync(role => role.Key == request.Name);
         if (role is null) return BadRequest(new { message = "Select an existing role." });
-        if (user.Role == nameof(UserRole.Superuser) || role.Name == nameof(UserRole.Superuser))
+        if (user.AccessRole.Key == nameof(UserRole.Superuser) || role.Key == nameof(UserRole.Superuser))
         {
             return Forbid();
         }
@@ -105,25 +117,25 @@ public class RolesController(SocDbContext context, ILogger<RolesController> logg
         var permissions = await ResolvePermissionsAsync(request.Permissions);
         if (permissions is null) return BadRequest(new { message = "Unknown permission." });
 
-        var customerId = role.Name == nameof(UserRole.Customer)
+        var customerId = role.Key == nameof(UserRole.Customer)
             ? request.CustomerId ?? user.CustomerId
             : null;
-        if (role.Name == nameof(UserRole.Customer) &&
+        if (role.Key == nameof(UserRole.Customer) &&
             (!await context.Customers.AnyAsync(customer => customer.Id == customerId) ||
              await context.TenantAccesses.AnyAsync(access => access.UserId == id)))
         {
             return BadRequest(new { message = "Customer accounts need an existing customer and cannot have employee customer access." });
         }
 
-        var previousRole = user.Role;
+        var previousRole = user.AccessRole.Key;
         var previousPermissions = Describe(user.DirectPermissions);
-        user.Role = role.Name;
+        user.AccessRole = role;
         user.CustomerId = customerId;
         user.DirectPermissions = permissions;
         await context.SaveChangesAsync();
         logger.LogInformation(
             "User {ActorId} changed access for user {TargetId} from {PreviousRole} ({PreviousPermissions}) to {Role} ({Permissions})",
-            ActorId, id, previousRole, previousPermissions, role.Name, Describe(permissions));
+            ActorId, id, previousRole, previousPermissions, role.Key, Describe(permissions));
         return NoContent();
     }
 
@@ -142,8 +154,13 @@ public class RolesController(SocDbContext context, ILogger<RolesController> logg
     private static string Describe(IEnumerable<Permission> permissions) =>
         string.Join(", ", permissions.Select(permission => permission.Key).Order(StringComparer.Ordinal));
 
+    public record CreateRoleRequest(
+        [Required, StringLength(100)] string Name,
+        [Required] string[] Permissions);
+
     public record RoleRequest(
         [Required, StringLength(20)] string Name,
         [Required] string[] Permissions,
-        int? CustomerId);
+        int? CustomerId,
+        [StringLength(100, MinimumLength = 1)] string? DisplayName);
 }

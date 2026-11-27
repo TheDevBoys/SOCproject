@@ -42,9 +42,8 @@ public class SocDbContext(DbContextOptions<SocDbContext> options) : DbContext(op
             entity.Property(u => u.MfaSecret)
                 .HasMaxLength(512);
 
-            entity.Property(u => u.Role).HasMaxLength(20);
             entity.HasOne(u => u.AccessRole).WithMany()
-                .HasForeignKey(u => u.Role).OnDelete(DeleteBehavior.Restrict);
+                .HasForeignKey(u => u.RoleId).OnDelete(DeleteBehavior.Restrict);
             entity.HasMany(u => u.DirectPermissions).WithMany()
                 .UsingEntity("UserPermissions");
 
@@ -62,12 +61,12 @@ public class SocDbContext(DbContextOptions<SocDbContext> options) : DbContext(op
 
         modelBuilder.Entity<Role>(entity =>
         {
-            entity.HasKey(role => role.Name);
-            entity.Property(role => role.Name).HasMaxLength(20);
+            entity.Property(role => role.Id).HasDefaultValueSql("NEWSEQUENTIALID()");
+            entity.Property(role => role.Key).HasMaxLength(20);
+            entity.HasIndex(role => role.Key).IsUnique();
+            entity.Property(role => role.Name).HasMaxLength(100);
             entity.HasMany(role => role.Permissions).WithMany()
                 .UsingEntity("RolePermissions");
-            entity.HasData(Enum.GetNames<SocManagement.Api.Enums.UserRole>()
-                .Select(name => new Role { Name = name }));
         });
 
         modelBuilder.Entity<Permission>(entity =>

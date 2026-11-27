@@ -48,13 +48,13 @@ public class InvitationService : IInvitationService
             throw new ArgumentException("Name and email are required.");
         }
 
-        var selectedRole = await _context.Roles.FindAsync(role);
+        var selectedRole = await _context.Roles.SingleOrDefaultAsync(candidate => candidate.Key == role);
         if (selectedRole is null)
         {
             throw new ArgumentException("Invalid user role.", nameof(role));
         }
 
-        if (selectedRole.Name == nameof(UserRole.Customer)
+        if (selectedRole.Key == nameof(UserRole.Customer)
             ? !await _context.Customers.AnyAsync(customer => customer.Id == customerId)
             : customerId.HasValue)
         {
@@ -96,7 +96,7 @@ public class InvitationService : IInvitationService
             Id = Guid.NewGuid(),
             Name = name,
             Email = email,
-            Role = selectedRole.Name,
+            RoleId = selectedRole.Id,
             CustomerId = customerId,
             Status = UserStatus.Invited,
             MfaEnabled = true,

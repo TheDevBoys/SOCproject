@@ -12,7 +12,7 @@ public class User
 
     public string PasswordHash { get; set; } = string.Empty;
 
-    public string Role { get; set; } = nameof(UserRole.Tier1);
+    public Guid RoleId { get; set; }
     public Role AccessRole { get; set; } = null!;
     public ICollection<Permission> DirectPermissions { get; set; } = [];
 

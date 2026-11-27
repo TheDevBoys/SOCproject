@@ -92,7 +92,9 @@ public class AuthController : ControllerBase
             Id = user.Id,
             Name = user.Name,
             Email = user.Email,
-            Role = user.Role,
+            Role = user.AccessRole.Key,
+            RoleId = user.RoleId,
+            RoleName = user.AccessRole.Name,
             Permissions = Permissions.ForUser(user),
             CustomerAccessCount = user.CustomerId.HasValue
                 ? 1

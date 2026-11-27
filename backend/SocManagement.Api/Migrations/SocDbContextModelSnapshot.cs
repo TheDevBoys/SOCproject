@@ -46,12 +46,12 @@ namespace SocManagement.Api.Migrations
                     b.Property<string>("PermissionsKey")
                         .HasColumnType("nvarchar(64)");
 
-                    b.Property<string>("RoleName")
-                        .HasColumnType("nvarchar(20)");
+                    b.Property<Guid>("RoleId")
+                        .HasColumnType("uniqueidentifier");
 
-                    b.HasKey("PermissionsKey", "RoleName");
+                    b.HasKey("PermissionsKey", "RoleId");
 
-                    b.HasIndex("RoleName");
+                    b.HasIndex("RoleId");
 
                     b.ToTable("RolePermissions");
                 });
@@ -207,51 +207,27 @@ namespace SocManagement.Api.Migrations
 
             modelBuilder.Entity("SocManagement.Api.Models.Role", b =>
                 {
-                    b.Property<string>("Name")
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier")
+                        .HasDefaultValueSql("NEWSEQUENTIALID()");
+
+                    b.Property<string>("Key")
+                        .IsRequired()
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
 
-                    b.HasKey("Name");
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Key")
+                        .IsUnique();
 
                     b.ToTable("Roles");
-
-                    b.HasData(
-                        new
-                        {
-                            Name = "Superuser"
-                        },
-                        new
-                        {
-                            Name = "Tier1"
-                        },
-                        new
-                        {
-                            Name = "Tier2"
-                        },
-                        new
-                        {
-                            Name = "Tier3"
-                        },
-                        new
-                        {
-                            Name = "Engineer"
-                        },
-                        new
-                        {
-                            Name = "AccountManager"
-                        },
-                        new
-                        {
-                            Name = "ForensicAnalyst"
-                        },
-                        new
-                        {
-                            Name = "Customer"
-                        },
-                        new
-                        {
-                            Name = "TicketIntakeOfficer"
-                        });
                 });
 
             modelBuilder.Entity("SocManagement.Api.Models.SLA", b =>
@@ -423,10 +399,8 @@ namespace SocManagement.Api.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("Role")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
+                    b.Property<Guid>("RoleId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("Status")
                         .IsRequired()
@@ -440,7 +414,7 @@ namespace SocManagement.Api.Migrations
                     b.HasIndex("Email")
                         .IsUnique();
 
-                    b.HasIndex("Role");
+                    b.HasIndex("RoleId");
 
                     b.ToTable("Users");
                 });
@@ -503,7 +477,7 @@ namespace SocManagement.Api.Migrations
 
                     b.HasOne("SocManagement.Api.Models.Role", null)
                         .WithMany()
-                        .HasForeignKey("RoleName")
+                        .HasForeignKey("RoleId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
@@ -625,7 +599,7 @@ namespace SocManagement.Api.Migrations
 
                     b.HasOne("SocManagement.Api.Models.Role", "AccessRole")
                         .WithMany()
-                        .HasForeignKey("Role")
+                        .HasForeignKey("RoleId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 

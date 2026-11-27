@@ -22,6 +22,7 @@ public class UserService : IUserService
     {
         var users = await _context.Users
             .AsNoTracking()
+            .Include(user => user.AccessRole)
             .OrderBy(u => u.Name)
             .Select(u => new
             {
@@ -37,6 +38,7 @@ public class UserService : IUserService
     {
         var result = await _context.Users
             .AsNoTracking()
+            .Include(user => user.AccessRole)
             .Where(u => u.Id == id)
             .Select(u => new
             {
@@ -62,12 +64,13 @@ public class UserService : IUserService
             return (UserSaveResult.InvalidCustomerLink, null);
         }
 
+        var role = await _context.Roles.SingleAsync(role => role.Key == request.Role);
         var user = new User
         {
             Id = Guid.NewGuid(),
             Name = request.Name.Trim(),
             Email = email,
-            Role = request.Role,
+            AccessRole = role,
             CustomerId = request.CustomerId,
             MfaEnabled = true,
             Status = UserStatus.Active
@@ -83,7 +86,7 @@ public class UserService : IUserService
 
     public async Task<UserSaveResult> UpdateAsync(Guid id, UpdateUserDto request)
     {
-        var user = await _context.Users.FindAsync(id);
+        var user = await _context.Users.Include(user => user.AccessRole).SingleOrDefaultAsync(user => user.Id == id);
 
         if (user == null)
         {
@@ -98,7 +101,7 @@ public class UserService : IUserService
             return UserSaveResult.EmailTaken;
         }
 
-        var newRole = request.Role ?? user.Role;
+        var newRole = request.Role ?? user.AccessRole.Key;
 
         // Klantgebruiker houdt zijn klant als er geen nieuwe wordt meegestuurd;
         // bij een medewerkersrol wordt CustomerId leeg (tenzij er foutief een is meegestuurd).
@@ -119,7 +122,10 @@ public class UserService : IUserService
         }
 
         user.Email = email;
-        user.Role = newRole;
+        if (newRole != user.AccessRole.Key)
+        {
+            user.AccessRole = await _context.Roles.SingleAsync(role => role.Key == newRole);
+        }
         user.CustomerId = newCustomerId;
         if (request.Name is not null)
         {
@@ -138,13 +144,13 @@ public class UserService : IUserService
             await using var transaction =
                 await _context.Database.BeginTransactionAsync(System.Data.IsolationLevel.Serializable);
 
-            var user = await _context.Users.SingleOrDefaultAsync(user => user.Id == id);
+            var user = await _context.Users.Include(user => user.AccessRole).SingleOrDefaultAsync(user => user.Id == id);
             if (user is null)
             {
                 return UserDeleteResult.NotFound;
             }
 
-            if (user.Role == nameof(UserRole.Superuser))
+            if (user.AccessRole.Key == nameof(UserRole.Superuser))
             {
                 return UserDeleteResult.Protected;
             }
@@ -183,7 +189,9 @@ public class UserService : IUserService
         Id = user.Id,
         Name = user.Name,
         Email = user.Email,
-        Role = user.Role,
+        Role = user.AccessRole.Key,
+        RoleId = user.RoleId,
+        RoleName = user.AccessRole.Name,
         CustomerAccess = customerCount == 1 ? "1 customer" : $"{customerCount} customers",
         CustomerId = user.CustomerId,
         TwoFactor = user.MfaEnabled,

@@ -168,23 +168,38 @@
   color: #92400e;
 }
 
+.table,
+.permissionsTable {
+  & th:last-child,
+  & td:last-child {
+    width: 84px;
+    text-align: right;
+    white-space: nowrap;
+  }
+}
+
 .permissionsTable {
   table-layout: fixed;
 
-  & th:first-child,
+  & th:first-child {
+    width: 40%;
+  }
+
+  & tbody tr {
+    height: 52px;
+  }
+
+  & td {
+    padding-block: 8px;
+    vertical-align: middle;
+  }
+
   & td:first-child {
-    width: 30%;
-    text-align: left;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
-  & th:not(:first-child),
-  & td:not(:first-child) {
-    text-align: center;
-  }
-
-  & th {
-    white-space: normal;
-  }
 }
 
 .allowed {
@@ -215,23 +230,11 @@
   }
 }
 
-/* INVITE USER MODAL */
-
-.modalBackdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 1000;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  padding: 20px;
-  background: rgb(32 39 49 / 55%);
-}
-
-.inviteModal {
-  width: min(100%, 480px);
+.dialog {
+  width: min(calc(100% - 40px), 480px);
+  padding: 0;
+  margin: auto;
+  color: #202731;
   max-height: calc(100svh - 40px);
   overflow-y: auto;
 
@@ -243,7 +246,7 @@
   box-shadow: 0 20px 60px rgb(32 39 49 / 18%);
 }
 
-.inviteModalHeader {
+.dialogHeader {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
@@ -253,21 +256,21 @@
   border-bottom: 1px solid #dce2eb;
 }
 
-.inviteModalTitle {
+.dialogTitle {
   margin: 0 0 6px;
   color: #202731;
   font-size: 17px;
   font-weight: 700;
 }
 
-.inviteModalDescription {
+.dialogDescription {
   margin: 0;
   color: #647184;
   font-size: 12px;
   line-height: 1.5;
 }
 
-.inviteCloseButton {
+.dialogClose {
   flex-shrink: 0;
 
   display: grid;
@@ -286,12 +289,12 @@
   cursor: pointer;
 }
 
-.inviteCloseButton:hover {
+.dialogClose:hover {
   background: #f8fafc;
   color: #202731;
 }
 
-.inviteCloseButton:focus-visible {
+.dialogClose:focus-visible {
   outline: 2px solid #647184;
   outline-offset: 2px;
 }
@@ -308,6 +311,9 @@
   display: flex;
   flex-direction: column;
   gap: 7px;
+  color: #202731;
+  font-size: 12px;
+  font-weight: 700;
 }
 
 .inviteLabel {
@@ -384,31 +390,6 @@
   border-top: 1px solid #e8edf3;
 }
 
-.inviteCancelButton {
-  padding: 10px 16px;
-
-  border: 1px solid #bdc9d8;
-  border-radius: 5px;
-
-  background: #fff;
-  color: #202731;
-
-  font: inherit;
-  font-size: 12px;
-  font-weight: 600;
-
-  cursor: pointer;
-}
-
-.inviteCancelButton:hover {
-  background: #f8fafc;
-}
-
-.inviteCancelButton:disabled {
-  cursor: not-allowed;
-  opacity: 0.6;
-}
-
 /* RESPONSIVE */
 
 @media (max-width: 1100px) {
@@ -449,63 +430,169 @@
     align-items: flex-start;
   }
 
-  .modalBackdrop {
-    padding: 12px;
-  }
-
-  .inviteModal {
+  .dialog {
+    width: min(calc(100% - 24px), 480px);
     max-height: calc(100svh - 24px);
   }
 
-  .inviteModalHeader,
+  .dialogHeader,
   .inviteForm {
     padding: 16px;
   }
 }
-.userDialog {
-  padding: 0;
-  color: #202731;
-}
-
-.userDialog::backdrop {
+.dialog::backdrop {
   background: rgb(32 39 49 / 55%);
 }
 
-.userActions summary {
+.dialogClose:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.userActions {
   cursor: pointer;
-  width: fit-content;
   padding: 4px 10px;
   border: 1px solid #d7dee8;
   border-radius: 5px;
-  list-style: none;
+  background: #fff;
+  color: #202731;
   font-weight: 700;
 }
 
-.userActions summary::-webkit-details-marker {
-  display: none;
+.userActions:hover {
+  background: #f8fafc;
 }
 
-.userActionOptions {
+.actionList {
   display: grid;
-  gap: 4px;
-  margin-top: 4px;
+  gap: 10px;
+  padding: 24px;
 }
 
-.userActionOptions button {
-  padding: 5px 8px;
-  text-align: left;
-  background: #fff;
-  border: 1px solid #d7dee8;
-  border-radius: 4px;
-  cursor: pointer;
+.actionList button {
+  justify-content: flex-start;
 }
 
-.userActionOptions .dangerText {
+.actionList .dangerText {
   color: #a52222;
 }
 
-.userDialog .dangerButton {
+.dialog .dangerButton {
   background: #a52222;
   border-color: #a52222;
   color: #fff;
+}
+
+.roleFields {
+  display: grid;
+  gap: 18px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+
+.inviteField .inviteInput {
+  font-weight: 400;
+}
+
+.permissionGroup {
+  min-width: 0;
+  margin: 0;
+  padding: 6px 12px;
+  border: 1px solid #d7dee8;
+  border-radius: 5px;
+}
+
+.permissionOption {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 8px 0;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.permissionOption + .permissionOption {
+  border-top: 1px solid #e8edf3;
+}
+
+.permissionOption input {
+  margin-top: 3px;
+}
+
+.permissionDetails {
+  display: grid;
+  gap: 3px;
+}
+
+.permissionDetails span,
+.permissionDetails dd {
+  margin: 0;
+  color: #647184;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.permissionCount {
+  padding: 4px 9px;
+  border: 1px solid #d7dee8;
+  border-radius: 5px;
+  background: #fff;
+  color: #202731;
+  font: inherit;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.permissionCount:hover {
+  border-color: #94a3b8;
+  background: #f1f5f9;
+}
+
+.permissionCount:focus-visible {
+  outline: 2px solid #334bc4;
+  outline-offset: 2px;
+}
+
+.permissionList {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+  padding: 20px 24px;
+}
+
+.permissionList dt {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-weight: 700;
+}
+
+.permissionList .superuserPermissionBadge {
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: #eef2ff;
+  color: #3730a3;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.permissionList > div + div {
+  padding-top: 12px;
+  border-top: 1px solid #e8edf3;
+}
+
+.permissionChanges p {
+  margin: 0;
+  font-size: 12px;
+}
+
+@media (max-width: 700px) {
+  .actionList {
+    padding: 16px;
+  }
 }

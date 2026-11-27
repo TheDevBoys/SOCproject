@@ -28,6 +28,8 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
 
   const [user, setUser] = useState<CurrentUser | null>(null)
   const [checked, setChecked] = useState(false)
+  const [failedPath, setFailedPath] = useState<string | null>(null)
+  const [attempt, setAttempt] = useState(0)
 
   useEffect(() => {
     if (isPublic) {
@@ -41,26 +43,45 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
         if (cancelled) return
 
         if (current) {
+          setFailedPath(null)
           setUser(current)
           setChecked(true)
         } else {
+          setUser(null)
+          setChecked(false)
           router.replace('/login')
         }
       })
       .catch(() => {
-        if (!cancelled) router.replace('/login')
+        if (!cancelled) {
+          setUser(null)
+          setChecked(false)
+          setFailedPath(pathname)
+        }
       })
 
     return () => {
       cancelled = true
     }
-  }, [isPublic, pathname, router])
+  }, [attempt, isPublic, pathname, router])
 
   async function logout() {
     await logoutRequest()
     setUser(null)
     setChecked(false)
     router.replace('/login')
+  }
+
+  if (!isPublic && failedPath === pathname) {
+    return (
+      <main>
+        <p role="alert">Could not verify your session. Try again in a moment.</p>
+        <button type="button" onClick={() => {
+          setFailedPath(null)
+          setAttempt(value => value + 1)
+        }}>Try again</button>
+      </main>
+    )
   }
 
   if (!isPublic && !checked) {

@@ -22,6 +22,8 @@ export type CurrentUser = {
   name: string
   email: string
   role: UserRole
+  roleId: string
+  roleName: string
   permissions: string[]
   customerAccessCount: number
   mfaEnabled: boolean

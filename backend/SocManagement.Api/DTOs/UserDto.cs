@@ -11,6 +11,8 @@ public class UserDto
     public string Email { get; set; } = string.Empty;
 
     public string Role { get; set; } = string.Empty;
+    public Guid RoleId { get; set; }
+    public string RoleName { get; set; } = string.Empty;
 
     public string CustomerAccess { get; set; } = string.Empty;
 

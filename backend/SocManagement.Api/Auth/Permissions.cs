@@ -27,11 +27,11 @@ public static class Permissions
 
     public static bool CanAssignRole(ClaimsPrincipal actor, Role role) =>
         actor.HasClaim(ClaimType, RoleManage) ||
-        (role.Name == nameof(UserRole.Tier1) &&
+        (role.Key == nameof(UserRole.Tier1) &&
          role.Permissions.All(permission => actor.HasClaim(ClaimType, permission.Key)));
 
     public static IReadOnlyList<string> ForUser(User user) =>
-        user.Role == nameof(UserRole.Superuser)
+        user.AccessRole.Key == nameof(UserRole.Superuser)
             ? All.Append(RoleManage).ToArray()
             : user.AccessRole.Permissions.Select(permission => permission.Key)
                 .Union(user.DirectPermissions.Select(permission => permission.Key))

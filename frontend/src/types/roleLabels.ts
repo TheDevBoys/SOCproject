@@ -11,6 +11,7 @@ const roleLabels: Record<string, string> = {
 
 
 
-export function roleLabel(role: string) {
+export function roleLabel(role: string, displayName?: string) {
+  if (displayName && displayName !== role) return displayName
   return Object.hasOwn(roleLabels, role) ? roleLabels[role] : role
 }
