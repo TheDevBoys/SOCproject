@@ -26,6 +26,24 @@ function formatLastSignIn(lastSignIn: string | null): string {
   return new Date(lastSignIn).toLocaleString()
 }
 
+type UserActionMenu = { user: User; canEdit: boolean; canEditAccess: boolean; canChangeStatus: boolean; canDelete: boolean }
+
+function RemovalActions({ menu, onSelect }: { menu: UserActionMenu; onSelect: (action: 'status' | 'delete') => void }) {
+  return (
+    <>
+      {menu.canChangeStatus && (
+        <Button variant="secondary" className={menu.user.status === 'Active' ? styles.dangerText : undefined}
+          onClick={() => onSelect('status')}>
+          {menu.user.status === 'Active' ? 'Deactivate user' : 'Reactivate user'}
+        </Button>
+      )}
+      {menu.canDelete && (
+        <Button variant="secondary" className={styles.dangerText} onClick={() => onSelect('delete')}>Delete user</Button>
+      )}
+    </>
+  )
+}
+
 export default function UsersRolesPage() {
   const [users, setUsers] = useState<User[]>([])
   const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null)
@@ -38,7 +56,8 @@ export default function UsersRolesPage() {
   const [viewedRole, setViewedRole] = useState<RoleAccess | null>(null)
   const [editor, setEditor] = useState<{ mode: 'create' | 'role' | 'user'; initial: RoleAccess; target?: string } | null>(null)
   const [accessError, setAccessError] = useState('')
-  const [actionMenu, setActionMenu] = useState<{ user: User; canEdit: boolean; canEditAccess: boolean; canChangeStatus: boolean; canDelete: boolean } | null>(null)
+  const [actionMenu, setActionMenu] = useState<UserActionMenu | null>(null)
+  const [removalMenu, setRemovalMenu] = useState<UserActionMenu | null>(null)
   const [userAction, setUserAction] = useState<{ user: User; action: 'edit' | 'delete' | 'status' } | null>(null)
   const [roleMenu, setRoleMenu] = useState<RoleAccess | null>(null)
   const [roleToDelete, setRoleToDelete] = useState<RoleAccess | null>(null)
@@ -387,18 +406,29 @@ export default function UsersRolesPage() {
                     setActionMenu(null)
                   }}>Edit role and permissions</Button>
                 )}
-                {actionMenu.canChangeStatus && (
-                  <Button variant="secondary" className={actionMenu.user.status === 'Active' ? styles.dangerText : undefined} onClick={() => {
-                    setUserAction({ user: actionMenu.user, action: 'status' })
-                    setActionMenu(null)
-                  }}>{actionMenu.user.status === 'Active' ? 'Deactivate user' : 'Reactivate user'}</Button>
-                )}
-                {actionMenu.canDelete && (
+                {actionMenu.canChangeStatus && actionMenu.canDelete ? (
                   <Button variant="secondary" className={styles.dangerText} onClick={() => {
-                    setUserAction({ user: actionMenu.user, action: 'delete' })
+                    setRemovalMenu(actionMenu)
                     setActionMenu(null)
-                  }}>Delete user</Button>
+                  }}>{actionMenu.user.status === 'Active' ? 'Deactivate or delete' : 'Reactivate or delete'}</Button>
+                ) : (
+                  <RemovalActions menu={actionMenu} onSelect={action => {
+                    setUserAction({ user: actionMenu.user, action })
+                    setActionMenu(null)
+                  }} />
                 )}
+              </div>
+            </UserDialog>
+          )}
+
+          {removalMenu && (
+            <UserDialog title={`${removalMenu.user.status === 'Active' ? 'Deactivate' : 'Reactivate'} or delete ${removalMenu.user.name}`}
+              description={removalMenu.user.email} onClose={() => setRemovalMenu(null)}>
+              <div className={styles.actionList}>
+                <RemovalActions menu={removalMenu} onSelect={action => {
+                  setUserAction({ user: removalMenu.user, action })
+                  setRemovalMenu(null)
+                }} />
               </div>
             </UserDialog>
           )}
