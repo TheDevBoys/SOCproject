@@ -8,7 +8,7 @@ namespace SocManagement.Api.Controllers;
 
 // Klanttoegang (KlantToegang / TenantAccess) per gebruiker beheren. Alleen Superusers.
 [ApiController]
-[Authorize(Policy = Permissions.RoleManage)]
+[Authorize(Policy = Permissions.Roles.Manage)]
 [Route("api/users/{userId:guid}/customers")]
 public class UserCustomersController : ControllerBase
 {

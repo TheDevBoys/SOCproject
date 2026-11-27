@@ -25,7 +25,7 @@ public class CustomersController : ControllerBase
 
 
     [HttpGet]
-    [Authorize(Policy = Permissions.CustomerRead)]
+    [Authorize(Policy = Permissions.Customers.Read)]
     public async Task<ActionResult<List<CustomerDto>>> GetCustomers()
     {
 
@@ -42,7 +42,7 @@ public class CustomersController : ControllerBase
 
 
     [HttpGet("{id:int}")]
-    [Authorize(Policy = Permissions.CustomerRead)]
+    [Authorize(Policy = Permissions.Customers.Read)]
     public async Task<ActionResult<CustomerDto>> GetCustomer(int id)
     {
 
@@ -67,7 +67,7 @@ public class CustomersController : ControllerBase
 
 
     [HttpPost]
-    [Authorize(Policy = Permissions.CustomerCreate)]
+    [Authorize(Policy = Permissions.Customers.Create)]
     public async Task<ActionResult<CustomerDto>> CreateCustomer(CreateCustomerDto dto)
     {
         var customer = new Customer

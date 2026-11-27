@@ -60,6 +60,7 @@ builder.Services
             var identity = new ClaimsIdentity(
                 [new Claim(ClaimTypes.NameIdentifier, user.Id.ToString())],
                 AuthSchemes.Session);
+            identity.AddClaim(new Claim(Permissions.RoleClaimType, user.AccessRole.Key));
             identity.AddClaims(Permissions.ForUser(user)
                 .Select(permission => new Claim(Permissions.ClaimType, permission)));
             context.ReplacePrincipal(new ClaimsPrincipal(identity));
@@ -78,13 +79,20 @@ builder.Services.AddAuthorization(options =>
         .RequireAssertion(_ => false)
         .Build();
 
-    foreach (var permission in Permissions.All.Append(Permissions.RoleManage))
+    foreach (var permission in Permissions.All)
     {
+        if (permission == Permissions.Roles.Manage) continue;
+
         options.AddPolicy(permission, policy => policy
             .AddAuthenticationSchemes(AuthSchemes.Session)
             .RequireAuthenticatedUser()
             .RequireClaim(Permissions.ClaimType, permission));
     }
+
+    options.AddPolicy(Permissions.Roles.Manage, policy => policy
+        .AddAuthenticationSchemes(AuthSchemes.Session)
+        .RequireAuthenticatedUser()
+        .RequireClaim(Permissions.RoleClaimType, Permissions.SuperuserRole));
 });
 var allowedOrigins = (builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [])
     .Select(origin => Uri.TryCreate(origin.Trim(), UriKind.Absolute, out var uri)

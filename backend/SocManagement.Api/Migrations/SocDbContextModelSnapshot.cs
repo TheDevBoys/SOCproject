@@ -146,6 +146,19 @@ namespace SocManagement.Api.Migrations
                         .HasMaxLength(64)
                         .HasColumnType("nvarchar(64)");
 
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<bool>("IsAssignable")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
                     b.HasKey("Key");
 
                     b.ToTable("Permissions");
@@ -153,39 +166,73 @@ namespace SocManagement.Api.Migrations
                     b.HasData(
                         new
                         {
-                            Key = "user.read"
+                            Key = "role.manage",
+                            Description = "Create roles, edit role names and permissions, assign roles and direct permissions to users, and manage user access to customers. Reserved for Superusers.",
+                            IsAssignable = false,
+                            Name = "Manage roles"
                         },
                         new
                         {
-                            Key = "user.create"
+                            Key = "user.read",
+                            Description = "View the user list and other users’ account details.",
+                            IsAssignable = true,
+                            Name = "View users"
                         },
                         new
                         {
-                            Key = "user.update"
+                            Key = "user.create",
+                            Description = "Create user accounts directly. Without role management, you can only assign Tier 1 and must have all its permissions.",
+                            IsAssignable = true,
+                            Name = "Create users"
                         },
                         new
                         {
-                            Key = "user.delete"
+                            Key = "user.update",
+                            Description = "Change users’ names and email addresses. Editing a Superuser or changing a role or customer assignment requires role management.",
+                            IsAssignable = true,
+                            Name = "Edit users"
                         },
                         new
                         {
-                            Key = "user.invite"
+                            Key = "user.delete",
+                            Description = "Delete other users’ accounts, except Superusers and users with assigned tickets, ticket messages or ticket history.",
+                            IsAssignable = true,
+                            Name = "Delete users"
                         },
                         new
                         {
-                            Key = "customer.read"
+                            Key = "user.invite",
+                            Description = "Send account invitations by email. Without role management, you can only assign Tier 1 and must have all its permissions.",
+                            IsAssignable = true,
+                            Name = "Invite users"
                         },
                         new
                         {
-                            Key = "customer.create"
+                            Key = "customer.read",
+                            Description = "View the customer list and individual customer details.",
+                            IsAssignable = true,
+                            Name = "View customers"
                         },
                         new
                         {
-                            Key = "ticket.read"
+                            Key = "customer.create",
+                            Description = "Create customer records.",
+                            IsAssignable = true,
+                            Name = "Create customers"
                         },
                         new
                         {
-                            Key = "ticket.create"
+                            Key = "ticket.read",
+                            Description = "View the ticket list and individual ticket details.",
+                            IsAssignable = true,
+                            Name = "View tickets"
+                        },
+                        new
+                        {
+                            Key = "ticket.create",
+                            Description = "Create tickets for existing customers and optionally assign them to an existing user.",
+                            IsAssignable = true,
+                            Name = "Create tickets"
                         });
                 });
 

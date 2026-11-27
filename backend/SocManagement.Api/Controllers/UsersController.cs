@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SocManagement.Api.Data;
-using SocManagement.Api.Enums;
 using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
 using SocManagement.Api.DTOs;
@@ -26,7 +25,7 @@ public class UsersController : ControllerBase
 
 
     [HttpGet]
-    [Authorize(Policy = Permissions.UserRead)]
+    [Authorize(Policy = Permissions.Users.Read)]
     public async Task<ActionResult<List<UserDto>>> GetUsers()
     {
         return Ok(await _userService.GetAllAsync());
@@ -35,7 +34,7 @@ public class UsersController : ControllerBase
     [HttpGet("{id:guid}")]
     public async Task<ActionResult<UserDto>> GetUser(Guid id)
     {
-        if (!User.HasClaim(Permissions.ClaimType, Permissions.UserRead) && CurrentUserId() != id)
+        if (!User.HasClaim(Permissions.ClaimType, Permissions.Users.Read) && CurrentUserId() != id)
         {
             return Forbid();
         }
@@ -55,7 +54,7 @@ public class UsersController : ControllerBase
 
 
     [HttpPost]
-    [Authorize(Policy = Permissions.UserCreate)]
+    [Authorize(Policy = Permissions.Users.Create)]
     public async Task<ActionResult<UserDto>> CreateUser(
         [FromBody] CreateUserDto request)
     {
@@ -98,12 +97,12 @@ public class UsersController : ControllerBase
     }
 
     [HttpPut("{id:guid}")]
-    [Authorize(Policy = Permissions.UserUpdate)]
+    [Authorize(Policy = Permissions.Users.Update)]
     public async Task<IActionResult> UpdateUser(
         Guid id,
         [FromBody] UpdateUserDto request)
     {
-        if (!User.HasClaim(Permissions.ClaimType, Permissions.RoleManage) &&
+        if (!Permissions.IsSuperuser(User) &&
             await IsSuperuserAsync(id))
         {
             return Forbid();
@@ -111,7 +110,7 @@ public class UsersController : ControllerBase
 
         if (request.Role is not null || request.CustomerId is not null)
         {
-            if (!User.HasClaim(Permissions.ClaimType, Permissions.RoleManage))
+            if (!Permissions.IsSuperuser(User))
             {
                 return Forbid();
             }
@@ -124,7 +123,7 @@ public class UsersController : ControllerBase
                     return BadRequest(new { message = "Select an existing role." });
                 }
 
-                if (await IsSuperuserAsync(id) && role.Key != nameof(UserRole.Superuser))
+                if (await IsSuperuserAsync(id) && !Permissions.IsSuperuser(role))
                 {
                     return Forbid();
                 }
@@ -166,7 +165,7 @@ public class UsersController : ControllerBase
     }
 
     [HttpDelete("{id:guid}")]
-    [Authorize(Policy = Permissions.UserDelete)]
+    [Authorize(Policy = Permissions.Users.Delete)]
     public async Task<IActionResult> DeleteUser(Guid id)
     {
         if (CurrentUserId() == id)
@@ -190,7 +189,7 @@ public class UsersController : ControllerBase
     }
 
     private Task<bool> IsSuperuserAsync(Guid id) =>
-        _context.Users.AnyAsync(user => user.Id == id && user.AccessRole.Key == nameof(UserRole.Superuser));
+        _context.Users.AnyAsync(user => user.Id == id && user.AccessRole.Key == Permissions.SuperuserRole);
 
     private Guid? CurrentUserId() =>
         Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var id) ? id : null;

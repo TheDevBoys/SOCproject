@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using SocManagement.Api.Auth;
 using SocManagement.Api.Data;
 using SocManagement.Api.DTOs;
 using SocManagement.Api.Enums;
@@ -150,7 +151,7 @@ public class UserService : IUserService
                 return UserDeleteResult.NotFound;
             }
 
-            if (user.AccessRole.Key == nameof(UserRole.Superuser))
+            if (Permissions.IsSuperuser(user.AccessRole))
             {
                 return UserDeleteResult.Protected;
             }

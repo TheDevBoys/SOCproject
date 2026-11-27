@@ -23,7 +23,7 @@ public class InvitationsController : ControllerBase
 
     // POST: api/invitations
     [HttpPost]
-    [Authorize(Policy = Permissions.UserInvite)]
+    [Authorize(Policy = Permissions.Users.Invite)]
     public async Task<IActionResult> InviteUser(
         [FromBody] CreateInvitedUserDto request)
     {

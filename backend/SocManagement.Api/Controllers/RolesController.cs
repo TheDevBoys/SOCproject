@@ -11,7 +11,7 @@ using SocManagement.Api.Models;
 namespace SocManagement.Api.Controllers;
 
 [ApiController]
-[Authorize(Policy = Permissions.RoleManage)]
+[Authorize(Policy = Permissions.Roles.Manage)]
 [Route("api/roles")]
 public class RolesController(SocDbContext context, ILogger<RolesController> logger) : ControllerBase
 {
@@ -20,18 +20,24 @@ public class RolesController(SocDbContext context, ILogger<RolesController> logg
     {
         var roles = await context.Roles.AsNoTracking().Include(role => role.Permissions)
             .OrderBy(role => role.Name).ToListAsync();
+        var permissions = await context.Permissions.AsNoTracking().ToListAsync();
 
         return Ok(new
         {
-            permissions = Permissions.All,
+            permissions = Permissions.All.Join(permissions, key => key, permission => permission.Key,
+                (_, permission) => new
+                {
+                    permission.Key,
+                    permission.Name,
+                    permission.Description,
+                    permission.IsAssignable
+                }),
             roles = roles.Select(role => new
             {
                 role.Id,
                 name = role.Key,
                 displayName = role.Name,
-                permissions = role.Key == nameof(UserRole.Superuser)
-                    ? Permissions.All.Prepend(Permissions.RoleManage).ToArray()
-                    : role.Permissions.Select(permission => permission.Key).ToArray()
+                permissions = Permissions.ForRole(role)
             })
         });
     }
@@ -45,10 +51,10 @@ public class RolesController(SocDbContext context, ILogger<RolesController> logg
             return Conflict(new { message = "This role already exists." });
         }
 
-        var permissions = await ResolvePermissionsAsync(request.Permissions);
+        var permissions = await ResolveAssignablePermissionsAsync(request.Permissions);
         if (permissions is null)
         {
-            return BadRequest(new { message = "Unknown permission." });
+            return BadRequest(new { message = UnassignablePermissionMessage });
         }
 
         var key = $"custom_{Guid.NewGuid():N}"[..20];
@@ -65,18 +71,22 @@ public class RolesController(SocDbContext context, ILogger<RolesController> logg
         var role = await context.Roles.Include(role => role.Permissions)
             .SingleOrDefaultAsync(role => role.Key == request.Name);
         if (role is null) return NotFound();
-        if (role.Key == nameof(UserRole.Superuser)) return Forbid();
+        if (Permissions.IsSuperuser(role)) return Forbid();
 
         if (request.DisplayName is not null)
         {
             if (string.IsNullOrWhiteSpace(request.DisplayName))
                 return BadRequest(new { message = "Role name cannot be blank." });
 
-            role.Name = request.DisplayName.Trim();
+            var displayName = request.DisplayName.Trim();
+            if (await context.Roles.AnyAsync(other => other.Id != role.Id && other.Name == displayName))
+                return Conflict(new { message = "This role already exists." });
+
+            role.Name = displayName;
         }
 
-        var permissions = await ResolvePermissionsAsync(request.Permissions);
-        if (permissions is null) return BadRequest(new { message = "Unknown permission." });
+        var permissions = await ResolveAssignablePermissionsAsync(request.Permissions);
+        if (permissions is null) return BadRequest(new { message = UnassignablePermissionMessage });
 
         var previousPermissions = Describe(role.Permissions);
         role.Permissions = permissions;
@@ -96,7 +106,9 @@ public class RolesController(SocDbContext context, ILogger<RolesController> logg
             name = user.AccessRole.Key,
             roleId = user.RoleId,
             user.CustomerId,
-            permissions = user.DirectPermissions.Select(permission => permission.Key)
+            permissions = user.DirectPermissions
+                .Where(permission => permission.IsAssignable && Permissions.All.Contains(permission.Key))
+                .Select(permission => permission.Key)
         });
     }
 
@@ -109,13 +121,13 @@ public class RolesController(SocDbContext context, ILogger<RolesController> logg
 
         var role = await context.Roles.SingleOrDefaultAsync(role => role.Key == request.Name);
         if (role is null) return BadRequest(new { message = "Select an existing role." });
-        if (user.AccessRole.Key == nameof(UserRole.Superuser) || role.Key == nameof(UserRole.Superuser))
+        if (Permissions.IsSuperuser(user.AccessRole) || Permissions.IsSuperuser(role))
         {
             return Forbid();
         }
 
-        var permissions = await ResolvePermissionsAsync(request.Permissions);
-        if (permissions is null) return BadRequest(new { message = "Unknown permission." });
+        var permissions = await ResolveAssignablePermissionsAsync(request.Permissions);
+        if (permissions is null) return BadRequest(new { message = UnassignablePermissionMessage });
 
         var customerId = role.Key == nameof(UserRole.Customer)
             ? request.CustomerId ?? user.CustomerId
@@ -139,15 +151,18 @@ public class RolesController(SocDbContext context, ILogger<RolesController> logg
         return NoContent();
     }
 
-    private async Task<List<Permission>?> ResolvePermissionsAsync(string[] keys)
+    private async Task<List<Permission>?> ResolveAssignablePermissionsAsync(string[] keys)
     {
         var uniqueKeys = keys.Distinct(StringComparer.Ordinal).ToArray();
         if (uniqueKeys.Any(key => !Permissions.All.Contains(key))) return null;
 
-        var permissions = await context.Permissions.Where(permission => uniqueKeys.Contains(permission.Key))
+        var permissions = await context.Permissions
+            .Where(permission => uniqueKeys.Contains(permission.Key) && permission.IsAssignable)
             .ToListAsync();
         return permissions.Count == uniqueKeys.Length ? permissions : null;
     }
+
+    private const string UnassignablePermissionMessage = "Unknown or non-assignable permission.";
 
     private string? ActorId => User.FindFirstValue(ClaimTypes.NameIdentifier);
 
