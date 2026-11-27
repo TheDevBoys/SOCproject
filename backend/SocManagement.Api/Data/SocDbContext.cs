@@ -134,7 +134,7 @@ public class SocDbContext(DbContextOptions<SocDbContext> options) : DbContext(op
             {
                 Key = Auth.Permissions.Users.Update,
                 Name = "Edit users",
-                Description = "Change users’ names and email addresses. Editing a Superuser or changing a role or customer assignment requires role management."
+                Description = "Change users’ names and email addresses, and deactivate or reactivate accounts other than Superusers. Editing a Superuser or changing a role or customer assignment requires role management."
             },
             new()
             {

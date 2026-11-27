@@ -38,8 +38,8 @@ export default function UsersRolesPage() {
   const [viewedRole, setViewedRole] = useState<RoleAccess | null>(null)
   const [editor, setEditor] = useState<{ mode: 'create' | 'role' | 'user'; initial: RoleAccess; target?: string } | null>(null)
   const [accessError, setAccessError] = useState('')
-  const [actionMenu, setActionMenu] = useState<{ user: User; canEdit: boolean; canEditAccess: boolean; canDelete: boolean } | null>(null)
-  const [userAction, setUserAction] = useState<{ user: User; action: 'edit' | 'delete' } | null>(null)
+  const [actionMenu, setActionMenu] = useState<{ user: User; canEdit: boolean; canEditAccess: boolean; canChangeStatus: boolean; canDelete: boolean } | null>(null)
+  const [userAction, setUserAction] = useState<{ user: User; action: 'edit' | 'delete' | 'status' } | null>(null)
   const [roleMenu, setRoleMenu] = useState<RoleAccess | null>(null)
   const [roleToDelete, setRoleToDelete] = useState<RoleAccess | null>(null)
   const [deletingRole, setDeletingRole] = useState(false)
@@ -307,6 +307,9 @@ export default function UsersRolesPage() {
                       const protectedUser = user.role === 'Superuser'
                       const canEdit = currentUser?.permissions.includes('user.update') && (!protectedUser || Boolean(catalog))
                       const canEditAccess = Boolean(catalog) && !protectedUser
+                      const canChangeStatus = Boolean(currentUser?.permissions.includes('user.update')) &&
+                        currentUser?.id !== user.id && user.status !== 'Invited' &&
+                        (!protectedUser || (user.status === 'Inactive' && Boolean(catalog)))
                       const canDelete = currentUser?.permissions.includes('user.delete') && !protectedUser && currentUser.id !== user.id
 
                       return (
@@ -342,10 +345,10 @@ export default function UsersRolesPage() {
 
                           <td>{user.status}</td>
                           <td>
-                            {(canEdit || canEditAccess || canDelete) && (
+                            {(canEdit || canEditAccess || canChangeStatus || canDelete) && (
                               <button type="button" className={styles.userActions}
                                 aria-label={`Actions for ${user.name}`} aria-haspopup="dialog"
-                                onClick={() => setActionMenu({ user, canEdit: Boolean(canEdit), canEditAccess, canDelete: Boolean(canDelete) })}>
+                                onClick={() => setActionMenu({ user, canEdit: Boolean(canEdit), canEditAccess, canChangeStatus, canDelete: Boolean(canDelete) })}>
                                 ⋯
                               </button>
                             )}
@@ -383,6 +386,12 @@ export default function UsersRolesPage() {
                     void editUserAccess(actionMenu.user)
                     setActionMenu(null)
                   }}>Edit role and permissions</Button>
+                )}
+                {actionMenu.canChangeStatus && (
+                  <Button variant="secondary" className={actionMenu.user.status === 'Active' ? styles.dangerText : undefined} onClick={() => {
+                    setUserAction({ user: actionMenu.user, action: 'status' })
+                    setActionMenu(null)
+                  }}>{actionMenu.user.status === 'Active' ? 'Deactivate user' : 'Reactivate user'}</Button>
                 )}
                 {actionMenu.canDelete && (
                   <Button variant="secondary" className={styles.dangerText} onClick={() => {

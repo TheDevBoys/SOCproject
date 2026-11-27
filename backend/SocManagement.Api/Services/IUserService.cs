@@ -1,4 +1,5 @@
 using SocManagement.Api.DTOs;
+using SocManagement.Api.Enums;
 
 namespace SocManagement.Api.Services;
 
@@ -13,6 +14,16 @@ public interface IUserService
     Task<UserSaveResult> UpdateAsync(Guid id, UpdateUserDto request);
 
     Task<UserDeleteResult> DeleteAsync(Guid id);
+
+    Task<UserStatusResult> SetStatusAsync(Guid id, UserStatus status);
+}
+
+public enum UserStatusResult
+{
+    Saved,
+    NotFound,
+    Protected,
+    NotActivated
 }
 
 public enum UserSaveResult

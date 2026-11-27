@@ -170,6 +170,29 @@ public class UserService : IUserService
             return UserDeleteResult.Deleted;
         });
 
+    public async Task<UserStatusResult> SetStatusAsync(Guid id, UserStatus status)
+    {
+        var user = await _context.Users.Include(user => user.AccessRole).SingleOrDefaultAsync(user => user.Id == id);
+        if (user is null)
+        {
+            return UserStatusResult.NotFound;
+        }
+
+        if (status == UserStatus.Inactive && Permissions.IsSuperuser(user.AccessRole))
+        {
+            return UserStatusResult.Protected;
+        }
+
+        if (user.Status == UserStatus.Invited)
+        {
+            return UserStatusResult.NotActivated;
+        }
+
+        user.Status = status;
+        await _context.SaveChangesAsync();
+        return UserStatusResult.Saved;
+    }
+
     private Task<bool> EmailInUseAsync(string email) =>
         _context.Users.AnyAsync(u => u.Email == email);
 

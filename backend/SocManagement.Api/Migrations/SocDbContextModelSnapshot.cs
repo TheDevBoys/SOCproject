@@ -188,7 +188,7 @@ namespace SocManagement.Api.Migrations
                         new
                         {
                             Key = "user.update",
-                            Description = "Change users’ names and email addresses. Editing a Superuser or changing a role or customer assignment requires role management.",
+                            Description = "Change users’ names and email addresses, and deactivate or reactivate accounts other than Superusers. Editing a Superuser or changing a role or customer assignment requires role management.",
                             IsAssignable = true,
                             Name = "Edit users"
                         },

@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SocManagement.Api.Data;
+using SocManagement.Api.Enums;
 using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
 using SocManagement.Api.DTOs;
@@ -16,11 +17,13 @@ public class UsersController : ControllerBase
 {
     private readonly IUserService _userService;
     private readonly SocDbContext _context;
+    private readonly ILogger<UsersController> _logger;
 
-    public UsersController(IUserService userService, SocDbContext context)
+    public UsersController(IUserService userService, SocDbContext context, ILogger<UsersController> logger)
     {
         _userService = userService;
         _context = context;
+        _logger = logger;
     }
 
 
@@ -183,6 +186,44 @@ public class UsersController : ControllerBase
             UserDeleteResult.HasTicketRecords => Conflict(new
             {
                 message = "This user has assigned tickets or ticket history and cannot be deleted."
+            }),
+            _ => NoContent()
+        };
+    }
+
+    [HttpPut("{id:guid}/status")]
+    [Authorize(Policy = Permissions.Users.Update)]
+    public async Task<IActionResult> SetUserStatus(Guid id, [FromBody] UpdateUserStatusDto request)
+    {
+        if (request.Status is not (UserStatus.Active or UserStatus.Inactive))
+        {
+            return BadRequest(new { message = "Status must be Active or Inactive." });
+        }
+
+        if (CurrentUserId() == id)
+        {
+            return BadRequest(new { message = "You cannot change the status of your own account." });
+        }
+
+        if (!Permissions.IsSuperuser(User) && await IsSuperuserAsync(id))
+        {
+            return Forbid();
+        }
+
+        var result = await _userService.SetStatusAsync(id, request.Status.Value);
+        if (result == UserStatusResult.Saved)
+        {
+            _logger.LogInformation("User {ActorId} set the status of user {TargetId} to {Status}",
+                CurrentUserId(), id, request.Status.Value);
+        }
+
+        return result switch
+        {
+            UserStatusResult.Protected => Forbid(),
+            UserStatusResult.NotFound => NotFound(new { message = "User not found." }),
+            UserStatusResult.NotActivated => Conflict(new
+            {
+                message = "This user has not accepted the invitation yet. Delete the user instead."
             }),
             _ => NoContent()
         };

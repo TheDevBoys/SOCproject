@@ -2,7 +2,7 @@
 
 import { useState, type FormEvent } from 'react'
 import Button from '../../src/components/ui/Button'
-import { deleteUser, updateUser } from '../../src/services/users'
+import { deleteUser, setUserStatus, updateUser } from '../../src/services/users'
 import type { User } from '../../src/types/user'
 
 import UserDialog from './UserDialog'
@@ -10,11 +10,14 @@ import styles from './page.module.css'
 
 export default function UserActionDialog({ user, action, onCancel, onSaved }: {
   user: User
-  action: 'edit' | 'delete'
+  action: 'edit' | 'delete' | 'status'
   onCancel: () => void
   onSaved: (user: User | null) => void
 }) {
   const removing = action === 'delete'
+  const changingStatus = action === 'status'
+  const deactivating = user.status === 'Active'
+  const destructive = removing || (changingStatus && deactivating)
   const [name, setName] = useState(user.name)
   const [email, setEmail] = useState(user.email)
   const [busy, setBusy] = useState(false)
@@ -28,6 +31,10 @@ export default function UserActionDialog({ user, action, onCancel, onSaved }: {
       if (removing) {
         await deleteUser(user.id)
         onSaved(null)
+      } else if (changingStatus) {
+        const status = deactivating ? 'Inactive' : 'Active'
+        await setUserStatus(user.id, status)
+        onSaved({ ...user, status })
       } else {
         const profile = { name: name.trim(), email: email.trim() }
         await updateUser(user.id, profile)
@@ -40,10 +47,18 @@ export default function UserActionDialog({ user, action, onCancel, onSaved }: {
   }
 
   return (
-    <UserDialog title={removing ? `Delete ${user.name}?` : `Edit ${user.name}`} busy={busy} onClose={onCancel}>
+    <UserDialog title={removing ? `Delete ${user.name}?`
+      : changingStatus ? `${deactivating ? 'Deactivate' : 'Reactivate'} ${user.name}?`
+      : `Edit ${user.name}`} busy={busy} onClose={onCancel}>
       <form className={styles.inviteForm} onSubmit={submit}>
         {removing ? (
           <p>This will remove <strong>{user.email}</strong> and end their access to the SOC.</p>
+        ) : changingStatus ? (
+          <p>
+            {deactivating
+              ? <><strong>{user.email}</strong> will be signed out and can no longer sign in until the account is reactivated.</>
+              : <><strong>{user.email}</strong> will be able to sign in again with their existing password.</>}
+          </p>
         ) : (
           <>
             <label className={styles.inviteField}>
@@ -58,9 +73,11 @@ export default function UserActionDialog({ user, action, onCancel, onSaved }: {
         )}
         {error && <p role="alert" className={styles.inviteError}>{error}</p>}
         <div className={styles.inviteActions}>
-          <Button variant="secondary" autoFocus={removing} disabled={busy} onClick={onCancel}>Cancel</Button>
-          <Button type="submit" loading={busy} className={removing ? styles.dangerButton : undefined}>
-            {removing ? 'Delete user' : 'Save changes'}
+          <Button variant="secondary" autoFocus={removing || changingStatus} disabled={busy} onClick={onCancel}>Cancel</Button>
+          <Button type="submit" loading={busy} className={destructive ? styles.dangerButton : undefined}>
+            {removing ? 'Delete user'
+              : changingStatus ? (deactivating ? 'Deactivate user' : 'Reactivate user')
+              : 'Save changes'}
           </Button>
         </div>
       </form>

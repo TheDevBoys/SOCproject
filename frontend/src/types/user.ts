@@ -1,6 +1,6 @@
 export type UserRole = string
 
-export type UserStatus = 'Active' | 'Invited'
+export type UserStatus = 'Active' | 'Inactive' | 'Invited'
 
 export type User = {
   id: string

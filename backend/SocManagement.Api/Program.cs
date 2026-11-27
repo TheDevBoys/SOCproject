@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
@@ -54,6 +55,7 @@ builder.Services
             if (user is null)
             {
                 context.RejectPrincipal();
+                await context.HttpContext.SignOutAsync(AuthSchemes.Session);
                 return;
             }
 
