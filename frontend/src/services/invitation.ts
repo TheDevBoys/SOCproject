@@ -10,7 +10,11 @@ async function parseResponse<T>(response: Response): Promise<T> {
       "message" in data &&
       typeof data.message === "string"
         ? data.message
-        : "Er is iets misgegaan. Probeer het opnieuw.";
+        : response.status === 401
+          ? "Je sessie is verlopen. Log opnieuw in."
+          : response.status === 403
+            ? "Je hebt geen toestemming om deze actie uit te voeren."
+            : `Het verzoek is mislukt (HTTP ${response.status}). Controleer de backendlogs voor de oorzaak.`;
 
     throw new Error(message);
   }

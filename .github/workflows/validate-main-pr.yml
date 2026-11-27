@@ -4,6 +4,14 @@ on:
   pull_request:
     branches:
       - main
+    types:
+      - opened
+      - reopened
+      - synchronize
+      - edited
+
+permissions:
+  contents: read
 
 jobs:
   validate-source-branch:
@@ -13,9 +21,11 @@ jobs:
       - name: Check source branch
         env:
           SOURCE_BRANCH: ${{ github.head_ref }}
+          SOURCE_REPOSITORY: ${{ github.event.pull_request.head.repo.full_name }}
+          TARGET_REPOSITORY: ${{ github.repository }}
         run: |
-          if [[ "$SOURCE_BRANCH" != "Test/Production" ]]; then
-            echo "Only test/production can merge into main."
+          if [[ "$SOURCE_BRANCH" != "staging" || "$SOURCE_REPOSITORY" != "$TARGET_REPOSITORY" ]]; then
+            echo "::error::Only staging can merge into main."
             exit 1
           fi
 

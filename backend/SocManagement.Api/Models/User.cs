@@ -12,7 +12,9 @@ public class User
 
     public string PasswordHash { get; set; } = string.Empty;
 
-    public UserRole Role { get; set; }
+    public Guid RoleId { get; set; }
+    public Role AccessRole { get; set; } = null!;
+    public ICollection<Permission> DirectPermissions { get; set; } = [];
 
     public bool MfaEnabled { get; set; }
 

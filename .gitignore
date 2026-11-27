@@ -8,6 +8,9 @@ AGENTS.md
 .next/
 # Node
 node_modules/
+npm-debug.log*
+*.tsbuildinfo
+next-env.d.ts
 
 # IDE / OS
 .vs/
@@ -20,3 +23,4 @@ deploy.zip
 publish/
 
 **/.env.local
+**/.env.*.local

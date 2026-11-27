@@ -2,6 +2,7 @@ export interface InviteUserRequest {
   name: string;
   email: string;
   role: string;
+  customerId?: number;
 }
 
 export interface InviteUserResponse {
