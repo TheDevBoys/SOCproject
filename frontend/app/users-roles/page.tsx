@@ -424,7 +424,7 @@ export default function UsersRolesPage() {
           {removalMenu && (
             <UserDialog title={`${removalMenu.user.status === 'Active' ? 'Deactivate' : 'Reactivate'} or delete ${removalMenu.user.name}`}
               description={removalMenu.user.email} onClose={() => setRemovalMenu(null)}>
-              <div className={styles.actionList}>
+              <div className={`${styles.actionList} ${styles.actionRow}`}>
                 <RemovalActions menu={removalMenu} onSelect={action => {
                   setUserAction({ user: removalMenu.user, action })
                   setRemovalMenu(null)

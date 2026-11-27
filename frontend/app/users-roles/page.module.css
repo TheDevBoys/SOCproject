@@ -473,6 +473,15 @@
   justify-content: flex-start;
 }
 
+.actionList.actionRow {
+  grid-auto-columns: minmax(0, 1fr);
+  grid-auto-flow: column;
+}
+
+.actionList.actionRow button {
+  justify-content: center;
+}
+
 .actionList .dangerText {
   color: #a52222;
 }
